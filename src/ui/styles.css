@@ -1,0 +1,301 @@
+/* Stili dei pannelli Canti. Colori e caratteri: variabili di /ui/cuelith-ui.css. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--cl-bg);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+textarea.cl-input {
+  padding: 8px 10px;
+  line-height: 1.45;
+}
+
+.s-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.s-wrap {
+  flex-wrap: wrap;
+}
+
+.s-grow {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.s-self-start {
+  align-self: flex-start;
+}
+
+.s-ellipsis {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.s-small {
+  min-height: 28px;
+  padding: 0 9px;
+  font-size: 12px;
+}
+
+.s-mono {
+  font-family: var(--cl-mono);
+}
+
+.s-muted,
+.s-hint {
+  color: var(--cl-muted);
+  margin: 0;
+}
+
+.s-hint {
+  font-size: 12px;
+}
+
+.s-empty {
+  color: var(--cl-muted);
+  padding: 16px 4px;
+  margin: 0;
+}
+
+.s-required {
+  color: var(--cl-live);
+}
+
+.s-plain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.s-error {
+  color: var(--cl-live-soft);
+  font-size: 12px;
+}
+
+/* ---------- Pannello laterale ---------- */
+
+.s-songs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  min-height: 100%;
+}
+
+.s-songs--drop {
+  outline: 2px dashed var(--cl-cue);
+  outline-offset: -4px;
+}
+
+.s-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.s-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  padding-right: 6px;
+}
+
+.s-item:hover,
+.s-item:focus-within {
+  background: var(--cl-bg-3);
+}
+
+.s-item-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  text-align: left;
+  background: none;
+  border: 0;
+  color: inherit;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.s-item-main:focus-visible {
+  outline: 2px solid var(--cl-cue);
+}
+
+.s-item-title {
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.s-item-sub {
+  font-size: 12px;
+  color: var(--cl-muted);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.s-number {
+  font-family: var(--cl-mono);
+  color: var(--cl-mod);
+  margin-right: 6px;
+}
+
+.s-report {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+}
+
+/* ---------- Editor ---------- */
+
+.s-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.s-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--cl-line);
+  background: var(--cl-bg-2);
+}
+
+.s-dirty {
+  margin-left: 10px;
+  font-size: 12px;
+  color: var(--cl-stage);
+}
+
+.s-confirm {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--cl-live-bg);
+  border-bottom: 1px solid var(--cl-live);
+}
+
+.s-issues {
+  margin: 0;
+  padding: 10px 14px 10px 32px;
+  background: var(--cl-live-bg);
+  color: var(--cl-live-soft);
+  border-bottom: 1px solid var(--cl-line);
+}
+
+.s-columns {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: 18px;
+  padding: 14px;
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .s-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.s-main,
+.s-side {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.s-group {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--cl-line);
+  border-radius: 10px;
+  min-width: 0;
+}
+
+.s-group legend {
+  padding: 0 4px;
+}
+
+.s-field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+.s-section {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--cl-bg-2);
+}
+
+.s-badge {
+  font: 700 12px var(--cl-mono);
+  letter-spacing: 0.06em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--cl-mod-chip);
+  color: var(--cl-mod);
+  min-width: 38px;
+  text-align: center;
+}
+
+.s-badge--error {
+  background: var(--cl-live);
+  color: var(--cl-live-ink);
+}
+
+.s-number-input {
+  width: 64px;
+}
+
+.s-text {
+  width: 100%;
+  resize: vertical;
+  font-family: var(--cl-body);
+}

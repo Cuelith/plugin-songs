@@ -1,0 +1,32 @@
+{
+  "$schema": "https://cuelith.github.io/cuelith-sdk/schema/plugin-1.json",
+  "id": "cuelith.songs",
+  "name": "Canti",
+  "description": "Canti con strofe, ritornelli e ordine di proiezione, come in OpenLP. Importa ed esporta OpenLyrics e ChordPro.",
+  "version": "0.1.0",
+  "publisher": "Cuelith",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/Cuelith/plugin-songs",
+  "family": "function",
+  "engines": { "cuelith": "^0.1.0", "protocol": "^1.4.0" },
+  "runtime": { "type": "none" },
+  "ui": { "entry": "ui/index.html" },
+  "permissions": [],
+  "dependencies": {},
+  "extends": [],
+  "provides": [],
+  "contributes": {
+    "itemTypes": [{ "id": "song", "title": "cuelith.songs.itemType.song", "editor": "editor" }],
+    "panels": [
+      { "id": "songs", "title": "cuelith.songs.panel.songs", "placement": "side" },
+      { "id": "editor", "title": "cuelith.songs.panel.editor", "placement": "center" }
+    ],
+    "locales": [{ "lang": "it", "file": "locales/it.json" }]
+  },
+  "docs": { "url": "https://github.com/Cuelith/plugin-songs#readme" },
+  "onboarding": [
+    { "title": "cuelith.songs.onboarding.1.title", "body": "cuelith.songs.onboarding.1.body" },
+    { "title": "cuelith.songs.onboarding.2.title", "body": "cuelith.songs.onboarding.2.body" },
+    { "title": "cuelith.songs.onboarding.3.title", "body": "cuelith.songs.onboarding.3.body" }
+  ]
+}
