@@ -37,6 +37,10 @@ const files = {
   "cuelith-plugin.json": [readFileSync(join(root, "cuelith-plugin.json")), { mtime }],
   LICENSE: [readFileSync(join(root, "LICENSE")), { mtime }],
 };
+// Icona del modulo (obbligatoria nel registry, unica).
+if (typeof manifest.icon === "string") {
+  files[manifest.icon] = [readFileSync(join(root, manifest.icon)), { mtime }];
+}
 if (existsSync(join(root, "README.md"))) {
   files["README.md"] = [readFileSync(join(root, "README.md")), { mtime }];
 }

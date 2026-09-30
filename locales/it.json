@@ -18,8 +18,6 @@
   "cuelith.songs.action.exportAll": "Esporta tutti…",
   "cuelith.songs.action.exportAllHint": "Salva tutti i canti (o quelli della libreria scelta) in un unico file ChordPro: è il backup dei canti, si rilegge con «Importa…».",
   "cuelith.songs.action.add": "In scaletta",
-  "cuelith.songs.action.addTo": "Metti in scaletta {title}",
-  "cuelith.songs.action.editTo": "Modifica {title}",
   "cuelith.songs.action.close": "Chiudi",
   "cuelith.songs.action.complete": "Completa",
   "cuelith.songs.action.save": "Salva",
@@ -44,7 +42,6 @@
   "cuelith.songs.list.label": "Canti",
   "cuelith.songs.empty": "Nessun canto ancora. Crea un canto o importa file OpenLyrics, ChordPro o di testo (anche trascinandoli qui).",
   "cuelith.songs.empty.search": "Nessun canto trovato.",
-  "cuelith.songs.hint.keys": "In diretta: V C P B I E O vanno all'inizio del prossimo Verse, Chorus, Pre-Chorus, Bridge, Intro, Ending, Others (dopo l'ultimo si riparte dal primo). Per una sezione precisa, clicca la sua slide.",
   "cuelith.songs.import.busy": "Importo…",
   "cuelith.songs.import.title": "Importazione",
   "cuelith.songs.import.saved#one": "{count} canto importato.",
@@ -111,7 +108,10 @@
   "cuelith.songs.error.call": "Operazione non riuscita (codice {code}).",
   "cuelith.songs.error.unexpected": "Si è verificato un errore imprevisto.",
   "cuelith.songs.action.preview": "Anteprima",
-  "cuelith.songs.action.previewOf": "Metti in anteprima «{title}» senza scaletta",
   "cuelith.songs.action.live": "In onda",
-  "cuelith.songs.action.liveOf": "Manda subito in onda «{title}» senza scaletta"
+  "cuelith.songs.actions.label": "Azioni sui canti selezionati",
+  "cuelith.songs.action.editor": "Editor",
+  "cuelith.songs.notice.addedMany": "{count} canti messi in scaletta.",
+  "cuelith.songs.action.unknownAuthor": "Autore sconosciuto",
+  "cuelith.songs.author.unknown": "Autore sconosciuto"
 }

@@ -4,8 +4,10 @@ Canti con strofe, ritornelli e ordine di proiezione.
 
 ## Cosa fa
 
-- **Scheda «Canti»** nella colonna di sinistra: cerca per titolo, testo, autore o numero dell'innario, filtra per libreria, mette in scaletta con «In scaletta».
-- **Editor canti** al centro, con il programma sempre visibile:
+- **Scheda «Canti»** nella colonna di sinistra (icona propria): cerca per titolo, testo, autore o numero dell'innario, filtra per libreria.
+  - Clic = seleziona, Ctrl+clic e Maiusc+clic = più canti, doppio clic = in anteprima.
+  - Barra fissa sulla selezione: **Anteprima · In onda** (senza passare dalla scaletta) · **In scaletta** (anche più canti, nell'ordine scelto) · **Editor**.
+- **Editor canti** in una finestra propria (spostabile su un altro schermo): la postazione resta com'è.
   - titolo e almeno un autore obbligatori, titoli alternativi;
   - sezioni con tipo e numero: strofa (V), ritornello (C), pre-ritornello (P), bridge (B), intro (I), finale (E), altro (O);
   - la riga `[---]` divide una sezione in più slide;

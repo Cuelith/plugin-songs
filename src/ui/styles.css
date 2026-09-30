@@ -132,12 +132,21 @@ textarea.cl-input {
   border-radius: 8px;
 }
 
-.s-item-actions {
+/* Barra fissa delle azioni sulla selezione, sotto le librerie. */
+.s-actions {
   display: flex;
-  justify-content: flex-end;
   flex-wrap: wrap;
   gap: 6px;
-  padding: 0 8px 8px;
+}
+
+.s-actions .cl-btn {
+  flex: 1 1 auto;
+}
+
+.s-item--selected,
+.s-item--selected:hover {
+  background: var(--cl-cue-bg);
+  box-shadow: inset 3px 0 0 var(--cl-cue);
 }
 
 .s-item:hover,

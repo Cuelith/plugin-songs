@@ -356,15 +356,34 @@ export function EditorPanel() {
                 </button>
               </div>
             ))}
-            <button
-              type="button"
-              className="cl-btn s-small s-self-start"
-              onClick={() => {
-                set("authors", [...edit.authors, { key: newKey(), name: "", role: "artist" }]);
-              }}
-            >
-              {t("cuelith.songs.action.addAuthor")}
-            </button>
+            <div className="s-row s-wrap">
+              <button
+                type="button"
+                className="cl-btn s-small"
+                onClick={() => {
+                  set("authors", [...edit.authors, { key: newKey(), name: "", role: "artist" }]);
+                }}
+              >
+                {t("cuelith.songs.action.addAuthor")}
+              </button>
+              {/* Quando l'autore non si conosce: meglio di un segno qualsiasi nei crediti. */}
+              <button
+                type="button"
+                className="cl-btn s-small"
+                onClick={() => {
+                  const name = t("cuelith.songs.author.unknown");
+                  const empty = edit.authors.find((a) => a.name.trim() === "");
+                  set(
+                    "authors",
+                    empty === undefined
+                      ? [...edit.authors, { key: newKey(), name, role: "artist" }]
+                      : edit.authors.map((a) => (a.key === empty.key ? { ...a, name } : a)),
+                  );
+                }}
+              >
+                {t("cuelith.songs.action.unknownAuthor")}
+              </button>
+            </div>
           </fieldset>
 
           <fieldset className="s-group">

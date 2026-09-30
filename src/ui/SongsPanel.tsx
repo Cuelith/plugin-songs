@@ -1,5 +1,5 @@
 import type { Library, LibraryItemSummary } from "@cuelith/protocol";
-import { useEffect, useRef, useState, type DragEvent } from "react";
+import { useEffect, useRef, useState, type DragEvent, type MouseEvent } from "react";
 import {
   IMPORT_EXTENSIONS,
   importSongs,
@@ -42,6 +42,8 @@ export function SongsPanel() {
   const [report, setReport] = useState<ImportReport | undefined>();
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [anchor, setAnchor] = useState<string | undefined>();
   const fileInput = useRef<HTMLInputElement>(null);
 
   const fail = (error: unknown) => {
@@ -92,15 +94,43 @@ export function SongsPanel() {
     panel.openPanel("editor", context).catch(fail);
   };
 
-  const addToPlaylist = (item: LibraryItemSummary) => {
-    panel
-      .call("playlist.addFromLibrary", { itemId: item.id })
-      .then(() => panel.notify("cuelith.songs.notice.added", { title: item.title }))
-      .catch(fail);
+  // Selezione: clic = uno, Ctrl+clic = aggiungi/togli, Maiusc+clic = intervallo.
+  // L'ordine della selezione e' quello in cui i canti vanno in scaletta.
+  const visible = (items ?? []).map((item) => item.id);
+  const selection = selected.filter((id) => visible.includes(id));
+  const single = selection.length === 1 ? selection[0] : undefined;
+  const select = (ids: string[]) => {
+    setSelected(ids);
+    setAnchor(ids.at(-1));
+  };
+  const choose = (id: string, event: MouseEvent) => {
+    if (event.shiftKey && anchor !== undefined && visible.includes(anchor)) {
+      const a = visible.indexOf(anchor);
+      const b = visible.indexOf(id);
+      setSelected(visible.slice(Math.min(a, b), Math.max(a, b) + 1));
+      return;
+    }
+    if (event.ctrlKey || event.metaKey) {
+      select(selection.includes(id) ? selection.filter((s) => s !== id) : [...selection, id]);
+      return;
+    }
+    select([id]);
   };
 
-  const sendDirect = (item: LibraryItemSummary, to: "preview" | "program") => {
-    panel.call("cue.send", { libraryItemId: item.id, to }).catch(fail);
+  const addToPlaylist = async (ids: readonly string[]) => {
+    try {
+      for (const itemId of ids) await panel.call("playlist.addFromLibrary", { itemId });
+      const first = items?.find((item) => item.id === ids[0]);
+      await (ids.length === 1 && first !== undefined
+        ? panel.notify("cuelith.songs.notice.added", { title: first.title })
+        : panel.notify("cuelith.songs.notice.addedMany", { count: String(ids.length) }));
+    } catch (error) {
+      fail(error);
+    }
+  };
+
+  const sendDirect = (libraryItemId: string, to: "preview" | "program") => {
+    panel.call("cue.send", { libraryItemId, to }).catch(fail);
   };
 
   const importFiles = async (files: readonly File[]) => {
@@ -254,6 +284,54 @@ export function SongsPanel() {
         ))}
       </select>
 
+      {/* Azioni fisse sulla selezione: sempre nello stesso posto. */}
+      <div className="s-actions" role="toolbar" aria-label={t("cuelith.songs.actions.label")}>
+        <button
+          type="button"
+          className="cl-btn s-small"
+          disabled={single === undefined}
+          onClick={() => {
+            if (single !== undefined) sendDirect(single, "preview");
+          }}
+        >
+          {t("cuelith.songs.action.preview")}
+        </button>
+        <button
+          type="button"
+          className="cl-btn cl-btn--live s-small"
+          disabled={single === undefined}
+          onClick={() => {
+            if (single !== undefined) sendDirect(single, "program");
+          }}
+        >
+          {t("cuelith.songs.action.live")}
+        </button>
+        <button
+          type="button"
+          className="cl-btn s-small"
+          disabled={selection.length === 0}
+          onClick={() => void addToPlaylist(selection)}
+        >
+          {t("cuelith.songs.action.add")}
+        </button>
+        <button
+          type="button"
+          className="cl-btn s-small"
+          disabled={selection.length > 1}
+          onClick={() => {
+            openEditor(
+              single !== undefined
+                ? { libraryItemId: single }
+                : selectedLibrary === ""
+                  ? {}
+                  : { libraryId: selectedLibrary },
+            );
+          }}
+        >
+          {t("cuelith.songs.action.editor")}
+        </button>
+      </div>
+
       {report !== undefined && (
         <ImportResult
           report={report}
@@ -281,72 +359,57 @@ export function SongsPanel() {
             : t("cuelith.songs.empty.search")}
         </p>
       ) : (
-        <ul className="s-list" aria-label={t("cuelith.songs.list.label")}>
-          {items.map((item) => (
-            <li key={item.entryId ?? item.id} className="s-item">
-              <button
-                type="button"
-                className="s-item-main"
-                aria-label={t("cuelith.songs.action.editTo", { title: item.title })}
-                onClick={() => {
-                  openEditor({ libraryItemId: item.id });
-                }}
+        <ul
+          className="s-list"
+          role="listbox"
+          aria-multiselectable="true"
+          aria-label={t("cuelith.songs.list.label")}
+        >
+          {items.map((item) => {
+            const isSelected = selection.includes(item.id);
+            return (
+              <li
+                key={item.entryId ?? item.id}
+                role="option"
+                aria-selected={isSelected}
+                className={`s-item${isSelected ? " s-item--selected" : ""}`}
               >
-                <span className="s-item-title">
-                  {item.number !== undefined && <span className="s-number">{item.number}</span>}
-                  {item.title}
-                </span>
-                <span className="s-item-sub">
-                  {[
-                    item.authors.join(", "),
-                    ...item.libraries
-                      .filter((m) => m.libraryId !== selectedLibrary)
-                      .map((m) =>
-                        [m.code ?? m.name, m.number].filter((part) => part !== undefined).join(" "),
-                      ),
-                  ]
-                    .filter((part) => part !== "")
-                    .join(" · ")}
-                </span>
-              </button>
-              {/* Senza passare dalla scaletta: in anteprima o subito in onda. */}
-              <div className="s-item-actions">
                 <button
                   type="button"
-                  className="cl-btn s-small"
-                  aria-label={t("cuelith.songs.action.previewOf", { title: item.title })}
-                  onClick={() => {
-                    sendDirect(item, "preview");
+                  className="s-item-main"
+                  onClick={(event) => {
+                    choose(item.id, event);
+                  }}
+                  onDoubleClick={() => {
+                    // Doppio clic = in anteprima: sicuro, non va in onda.
+                    select([item.id]);
+                    sendDirect(item.id, "preview");
                   }}
                 >
-                  {t("cuelith.songs.action.preview")}
+                  <span className="s-item-title">
+                    {item.number !== undefined && <span className="s-number">{item.number}</span>}
+                    {item.title}
+                  </span>
+                  <span className="s-item-sub">
+                    {[
+                      item.authors.join(", "),
+                      ...item.libraries
+                        .filter((m) => m.libraryId !== selectedLibrary)
+                        .map((m) =>
+                          [m.code ?? m.name, m.number]
+                            .filter((part) => part !== undefined)
+                            .join(" "),
+                        ),
+                    ]
+                      .filter((part) => part !== "")
+                      .join(" · ")}
+                  </span>
                 </button>
-                <button
-                  type="button"
-                  className="cl-btn cl-btn--live s-small"
-                  aria-label={t("cuelith.songs.action.liveOf", { title: item.title })}
-                  onClick={() => {
-                    sendDirect(item, "program");
-                  }}
-                >
-                  {t("cuelith.songs.action.live")}
-                </button>
-                <button
-                  type="button"
-                  className="cl-btn s-small"
-                  aria-label={t("cuelith.songs.action.addTo", { title: item.title })}
-                  onClick={() => {
-                    addToPlaylist(item);
-                  }}
-                >
-                  {t("cuelith.songs.action.add")}
-                </button>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
-      <p className="s-hint">{t("cuelith.songs.hint.keys")}</p>
     </div>
   );
 }
