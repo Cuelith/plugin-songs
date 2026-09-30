@@ -36,7 +36,9 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm check
-          pnpm build | tee package.txt
+          pnpm build | tee build.txt
+          # Nelle note della release solo nome, impronta e dimensione del pacchetto.
+          grep -E '^(dist/.+\.cpkg|sha256 |size )' build.txt > package.txt
           test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
       - name: Release
         working-directory: plugin-songs
