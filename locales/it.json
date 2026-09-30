@@ -8,7 +8,7 @@
   "cuelith.songs.onboarding.2.title": "Strofe, ritornelli e ordine",
   "cuelith.songs.onboarding.2.body": "Nell'editor ogni sezione ha un tipo e un numero (V1, C1, P1, B1…). Scrivi l'ordine di proiezione, per esempio «V1 C1 V2 C1 B1 C1»: il ritornello si scrive una volta e si ripete da solo. Dentro una sezione, la riga [---] la divide in più slide.",
   "cuelith.songs.onboarding.3.title": "In diretta e con altri programmi",
-  "cuelith.songs.onboarding.3.body": "Mentre un canto è in onda, i tasti V C P B I E O portano alla prossima strofa, ritornello, pre-ritornello, bridge, intro, finale o altro. Puoi importare ed esportare i canti in OpenLyrics (OpenLP, OpenSong…) e ChordPro, anche con gli accordi.",
+  "cuelith.songs.onboarding.3.body": "Mentre un canto è in onda, i tasti V C P B I E O portano all'inizio della prossima strofa, ritornello, pre-ritornello, bridge, intro, finale o altro. Se dopo non ce n'è, ripetono l'ultima (C ripete il ritornello). Puoi importare ed esportare i canti in OpenLyrics (OpenLP, OpenSong…) e ChordPro, anche con gli accordi.",
 
   "cuelith.songs.kind.verse": "Strofa",
   "cuelith.songs.kind.chorus": "Ritornello",
@@ -26,6 +26,8 @@
 
   "cuelith.songs.action.new": "+ Nuovo canto",
   "cuelith.songs.action.import": "Importa…",
+  "cuelith.songs.action.exportAll": "Esporta tutti…",
+  "cuelith.songs.action.exportAllHint": "Salva tutti i canti (o quelli della libreria scelta) in un unico file ChordPro: è il backup dei canti, si rilegge con «Importa…».",
   "cuelith.songs.action.add": "In scaletta",
   "cuelith.songs.action.addTo": "Metti in scaletta {title}",
   "cuelith.songs.action.editTo": "Modifica {title}",
@@ -54,7 +56,7 @@
   "cuelith.songs.list.label": "Canti",
   "cuelith.songs.empty": "Nessun canto ancora. Crea un canto o importa file OpenLyrics, ChordPro o di testo (anche trascinandoli qui).",
   "cuelith.songs.empty.search": "Nessun canto trovato.",
-  "cuelith.songs.hint.keys": "In diretta: V C P B I E O vanno alla prossima strofa, ritornello, pre-ritornello, bridge, intro, finale, altro.",
+  "cuelith.songs.hint.keys": "In diretta: V C P B I E O vanno all'inizio della prossima strofa, ritornello, pre-ritornello, bridge, intro, finale, altro. Per una sezione precisa, clicca la sua slide.",
 
   "cuelith.songs.import.busy": "Importo…",
   "cuelith.songs.import.title": "Importazione",
@@ -85,7 +87,7 @@
   "cuelith.songs.field.orderPlaceholder": "Es. V1 C1 V2 C1 (vuoto = ordine delle sezioni)",
   "cuelith.songs.field.orderAdd": "Aggiungi all'ordine",
   "cuelith.songs.field.orderResult": "Si proietta:",
-  "cuelith.songs.field.orderKeys": "In diretta i tasti {keys} portano alla prossima sezione di quel tipo.",
+  "cuelith.songs.field.orderKeys": "In diretta i tasti {keys} portano all'inizio della prossima sezione di quel tipo.",
   "cuelith.songs.field.credits": "Crediti e copyright",
   "cuelith.songs.field.copyright": "Copyright",
   "cuelith.songs.field.publisher": "Editore",
@@ -107,6 +109,7 @@
   "cuelith.songs.creditsShow.first": "Sulla prima slide",
   "cuelith.songs.creditsShow.none": "Non mostrare",
 
+  "cuelith.songs.notice.nothingToExport": "Non ci sono canti da esportare.",
   "cuelith.songs.notice.added": "«{title}» messo in scaletta.",
   "cuelith.songs.notice.saved": "«{title}» salvato.",
   "cuelith.songs.notice.savedAdded": "«{title}» salvato e messo in scaletta.",

@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   detectFormat,
   importSong,
+  importSongs,
   parseChordPro,
   parseOpenLyrics,
   parsePlainText,
   SongFormatError,
   toChordPro,
+  toChordProCollection,
   toOpenLyrics,
 } from "../src/formats/index.js";
 import { parseLabel } from "../src/formats/labels.js";
@@ -173,6 +175,20 @@ describe("testo semplice", () => {
     const song = parsePlainText("uno\n\nGloria\n\ndue\n\nGloria");
     expect(song.sections.map((s) => s.slides[0])).toEqual(["uno", "Gloria", "due"]);
     expect(song.order).toEqual(["v1", "v2", "v3", "v2"]);
+  });
+});
+
+describe("backup di tutti i canti", () => {
+  it("un file ChordPro con {new_song} si rilegge canto per canto", () => {
+    const second = normalizeSong({
+      ...emptySong(),
+      title: "Secondo",
+      authors: [{ name: "Anonimo", role: "artist" }],
+      sections: [{ kind: "chorus", number: 1, slides: ["Alleluia"] }],
+    });
+    const file = toChordProCollection([full, second]);
+    const songs = importSongs("Canti 2026-09-30.cho", file).map((r) => r.song);
+    expect(songs).toEqual([full, second]);
   });
 });
 

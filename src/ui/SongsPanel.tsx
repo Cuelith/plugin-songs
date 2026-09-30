@@ -1,9 +1,24 @@
 import type { Library, LibraryItemSummary } from "@cuelith/protocol";
 import { useEffect, useRef, useState, type DragEvent } from "react";
-import { IMPORT_EXTENSIONS, importSong, SongFormatError } from "../formats/index.js";
-import { checkSong, SONG_TYPE, songToItem, type Song } from "../model/song.js";
+import {
+  IMPORT_EXTENSIONS,
+  importSongs,
+  SongFormatError,
+  toChordProCollection,
+} from "../formats/index.js";
+import {
+  checkSong,
+  itemToSong,
+  normalizeSong,
+  SONG_TYPE,
+  songToItem,
+  type Song,
+} from "../model/song.js";
 import type { EditorContext } from "./context.js";
 import { errorKey, usePanel, usePanelState, useT } from "./panel.js";
+
+/** Canti letti per volta dall'archivio durante l'esportazione. */
+const PAGE = 200;
 
 interface ImportReport {
   readonly saved: number;
@@ -92,16 +107,20 @@ export function SongsPanel() {
     const failed: { file: string; key: string }[] = [];
     for (const file of files) {
       try {
-        const { song } = importSong(file.name, await file.text());
-        if (checkSong(song).length > 0) {
-          incomplete.push({ file: file.name, song });
-          continue;
+        // Un file puo' contenere piu' canti (es. il backup di «Esporta tutti»).
+        const songs = importSongs(file.name, await file.text());
+        for (const [index, { song }] of songs.entries()) {
+          const where = songs.length === 1 ? file.name : `${file.name} #${index + 1}`;
+          if (checkSong(song).length > 0) {
+            incomplete.push({ file: where, song });
+            continue;
+          }
+          await panel.call("library.saveItem", {
+            item: songToItem(song),
+            ...(selectedLibrary === "" ? {} : { libraryId: selectedLibrary }),
+          });
+          saved++;
         }
-        await panel.call("library.saveItem", {
-          item: songToItem(song),
-          ...(selectedLibrary === "" ? {} : { libraryId: selectedLibrary }),
-        });
-        saved++;
       } catch (error) {
         failed.push({
           file: file.name,
@@ -111,6 +130,37 @@ export function SongsPanel() {
     }
     setBusy(false);
     setReport({ saved, incomplete, failed });
+  };
+
+  /** Backup: tutti i canti (o quelli della libreria scelta) in un file ChordPro. */
+  const exportAll = async () => {
+    setBusy(true);
+    try {
+      const songs: Song[] = [];
+      for (let offset = 0; ; offset += PAGE) {
+        const { items: page } = await panel.call("library.items", {
+          type: SONG_TYPE,
+          limit: PAGE,
+          offset,
+          ...(selectedLibrary === "" ? {} : { libraryId: selectedLibrary }),
+        });
+        for (const summary of page) {
+          const { item } = await panel.call("library.getItem", { id: summary.id });
+          songs.push(normalizeSong(itemToSong(item)));
+        }
+        if (page.length < PAGE) break;
+      }
+      if (songs.length === 0) {
+        await panel.notify("cuelith.songs.notice.nothingToExport");
+        return;
+      }
+      const day = new Date().toISOString().slice(0, 10);
+      await panel.saveFile(`Canti ${day}.cho`, toChordProCollection(songs), "text/plain");
+    } catch (error) {
+      fail(error);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const onDrop = (event: DragEvent) => {
@@ -149,6 +199,15 @@ export function SongsPanel() {
           onClick={() => fileInput.current?.click()}
         >
           {busy ? t("cuelith.songs.import.busy") : t("cuelith.songs.action.import")}
+        </button>
+        <button
+          type="button"
+          className="cl-btn"
+          disabled={busy}
+          title={t("cuelith.songs.action.exportAllHint")}
+          onClick={() => void exportAll()}
+        >
+          {t("cuelith.songs.action.exportAll")}
         </button>
         <input
           ref={fileInput}

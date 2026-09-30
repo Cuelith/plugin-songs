@@ -1,5 +1,5 @@
 import type { Song } from "../model/song.js";
-import { parseChordPro } from "./chordpro.js";
+import { parseChordPro, toChordPro } from "./chordpro.js";
 import { MAX_SONG_FILE, parseOpenLyrics, SongFormatError } from "./openlyrics.js";
 import { parsePlainText } from "./text.js";
 
@@ -46,6 +46,33 @@ export function baseName(name: string): string {
   const file = name.split(/[\\/]/).pop() ?? name;
   const dot = file.lastIndexOf(".");
   return (dot > 0 ? file.slice(0, dot) : file).replace(/[_]+/g, " ").trim();
+}
+
+/** Un file di backup con tutti i canti (ChordPro con {new_song}) puo' essere grande. */
+export const MAX_COLLECTION_FILE = 32 * 1024 * 1024;
+
+const NEW_SONG = /^[ \t]*\{[ \t]*(?:new_song|ns)[ \t]*\}[ \t]*$/im;
+
+/**
+ * Tutti i canti in un solo file ChordPro, separati da {new_song}: il backup
+ * dell'archivio dei canti, che «Importa» rilegge.
+ */
+export function toChordProCollection(songs: readonly Song[]): string {
+  return songs.map(toChordPro).join("\n{new_song}\n\n");
+}
+
+/** Legge uno o piu' canti da un file (un ChordPro puo' contenerne molti). */
+export function importSongs(name: string, content: string): { song: Song; format: SongFormat }[] {
+  if (content.length > MAX_COLLECTION_FILE) {
+    throw new SongFormatError("cuelith.songs.error.fileTooLarge");
+  }
+  if (detectFormat(name, content) === "chordpro" && NEW_SONG.test(content)) {
+    return content
+      .split(new RegExp(NEW_SONG.source, "gim"))
+      .filter((part) => part.trim() !== "")
+      .map((part) => importSong(name, part));
+  }
+  return [importSong(name, content)];
 }
 
 /** Legge un canto da un file in uno dei formati accettati. */
