@@ -2,6 +2,7 @@ import type { Author } from "@cuelith/protocol";
 import {
   emptySong,
   parseOrder,
+  SECTION_LABEL,
   sectionId,
   trimLines,
   type Section,
@@ -10,7 +11,7 @@ import {
   type Songbook,
 } from "../model/song.js";
 import { SectionsBuilder } from "./builder.js";
-import { EXPORT_LABEL, parseLabel, type Label } from "./labels.js";
+import { parseLabel, type Label } from "./labels.js";
 
 // ChordPro (https://www.chordpro.org), formato secondario (decisione 0002):
 // testo con accordi tra quadre e direttive tra graffe. Quello che ChordPro
@@ -308,7 +309,7 @@ const oneLine = (value: string) => value.replace(/\s*\n\s*/g, " ").trim();
 
 function sectionBlock(section: Section): string {
   const env = ENVIRONMENT[section.kind];
-  const label = `${EXPORT_LABEL[section.kind]} ${section.number}`;
+  const label = `${SECTION_LABEL[section.kind]} ${section.number}`;
   return [`{start_of_${env}: ${label}}`, section.slides.join("\n\n"), `{end_of_${env}}`].join("\n");
 }
 

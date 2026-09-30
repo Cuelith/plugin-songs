@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { AUTHOR_ROLES, CatalogSchema, PluginManifestSchema } from "@cuelith/protocol";
 import { describe, expect, it } from "vitest";
-import { SECTION_KINDS } from "../src/model/song.js";
+import { SECTION_KINDS, SECTION_LABEL } from "../src/model/song.js";
 
 const root = join(import.meta.dirname, "..");
 const readJson = (file: string): unknown => JSON.parse(readFileSync(join(root, file), "utf8"));
@@ -33,11 +33,19 @@ describe("pacchetto del modulo", () => {
       [...text.matchAll(/"(cuelith\.songs\.[a-zA-Z0-9.]+[a-zA-Z0-9])"/g)].map((m) => m[1] ?? ""),
     );
     used.delete("cuelith.songs.song");
-    for (const kind of SECTION_KINDS) {
-      used.add(`cuelith.songs.kind.${kind === "pre-chorus" ? "preChorus" : kind}`);
-    }
     for (const role of AUTHOR_ROLES) used.add(`cuelith.songs.role.${role}`);
     const missing = [...used].filter((key) => !has(key));
     expect(missing).toEqual([]);
+    // I nomi delle sezioni non si traducono: sono fissi (Verse, Chorus...).
+    expect(Object.keys(catalog).filter((key) => key.startsWith("cuelith.songs.kind."))).toEqual([]);
+    expect(SECTION_KINDS.map((kind) => SECTION_LABEL[kind])).toEqual([
+      "Verse",
+      "Chorus",
+      "Pre-Chorus",
+      "Bridge",
+      "Intro",
+      "Ending",
+      "Others",
+    ]);
   });
 });

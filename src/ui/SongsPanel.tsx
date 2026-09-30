@@ -99,6 +99,10 @@ export function SongsPanel() {
       .catch(fail);
   };
 
+  const sendDirect = (item: LibraryItemSummary, to: "preview" | "program") => {
+    panel.call("cue.send", { libraryItemId: item.id, to }).catch(fail);
+  };
+
   const importFiles = async (files: readonly File[]) => {
     if (files.length === 0) return;
     setBusy(true);
@@ -182,7 +186,7 @@ export function SongsPanel() {
       }}
       onDrop={onDrop}
     >
-      <div className="s-row">
+      <div className="s-row s-wrap">
         <button
           type="button"
           className="cl-btn cl-btn--cue s-grow"
@@ -305,16 +309,39 @@ export function SongsPanel() {
                     .join(" · ")}
                 </span>
               </button>
-              <button
-                type="button"
-                className="cl-btn s-small"
-                aria-label={t("cuelith.songs.action.addTo", { title: item.title })}
-                onClick={() => {
-                  addToPlaylist(item);
-                }}
-              >
-                {t("cuelith.songs.action.add")}
-              </button>
+              {/* Senza passare dalla scaletta: in anteprima o subito in onda. */}
+              <div className="s-item-actions">
+                <button
+                  type="button"
+                  className="cl-btn s-small"
+                  aria-label={t("cuelith.songs.action.previewOf", { title: item.title })}
+                  onClick={() => {
+                    sendDirect(item, "preview");
+                  }}
+                >
+                  {t("cuelith.songs.action.preview")}
+                </button>
+                <button
+                  type="button"
+                  className="cl-btn cl-btn--live s-small"
+                  aria-label={t("cuelith.songs.action.liveOf", { title: item.title })}
+                  onClick={() => {
+                    sendDirect(item, "program");
+                  }}
+                >
+                  {t("cuelith.songs.action.live")}
+                </button>
+                <button
+                  type="button"
+                  className="cl-btn s-small"
+                  aria-label={t("cuelith.songs.action.addTo", { title: item.title })}
+                  onClick={() => {
+                    addToPlaylist(item);
+                  }}
+                >
+                  {t("cuelith.songs.action.add")}
+                </button>
+              </div>
             </li>
           ))}
         </ul>

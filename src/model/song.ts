@@ -37,6 +37,20 @@ export const SECTION_LETTER: Readonly<Record<SectionKind, string>> = {
   other: "o",
 };
 
+/**
+ * Nomi delle sezioni: sempre questi, in ogni lingua dell'interfaccia (scelta
+ * del fondatore). Non passano dai cataloghi delle traduzioni.
+ */
+export const SECTION_LABEL: Readonly<Record<SectionKind, string>> = {
+  verse: "Verse",
+  chorus: "Chorus",
+  "pre-chorus": "Pre-Chorus",
+  bridge: "Bridge",
+  intro: "Intro",
+  ending: "Ending",
+  other: "Others",
+};
+
 const KIND_OF_LETTER = new Map(
   Object.entries(SECTION_LETTER).map(([kind, letter]) => [letter, kind as SectionKind]),
 );

@@ -9,12 +9,12 @@ import {
   parseOrder,
   projectionOrder,
   SECTION_KINDS,
+  SECTION_LABEL,
   SECTION_LETTER,
   sectionId,
   songToItem,
   SLIDE_BREAK,
   type ItemBase,
-  type SectionKind,
   type SongIssue,
 } from "../model/song.js";
 import { readContext } from "./context.js";
@@ -30,10 +30,6 @@ import {
 import { errorKey, usePanel, useT } from "./panel.js";
 
 declare const __SONGS_VERSION__: string;
-
-/** Chiave del nome di un tipo di sezione (le chiavi non ammettono il trattino). */
-const kindKey = (kind: SectionKind): string =>
-  `cuelith.songs.kind.${kind === "pre-chorus" ? "preChorus" : kind}`;
 
 type Loading =
   | { readonly state: "loading" }
@@ -398,7 +394,7 @@ export function EditorPanel() {
                     >
                       {SECTION_KINDS.map((kind) => (
                         <option key={kind} value={kind}>
-                          {t(kindKey(kind))}
+                          {SECTION_LABEL[kind]}
                         </option>
                       ))}
                     </select>
@@ -490,7 +486,7 @@ export function EditorPanel() {
                     update(addSection(edit, kind));
                   }}
                 >
-                  + {t(kindKey(kind))}
+                  + {SECTION_LABEL[kind]}
                 </button>
               ))}
             </div>

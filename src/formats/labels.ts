@@ -29,7 +29,7 @@ const WORDS: ReadonlyMap<string, SectionKind> = new Map([
   ...(["ending", "outro", "finale", "fine", "end", "coda"] as const).map(
     (w) => [w, "ending"] as const,
   ),
-  ...(["other", "altro", "interludio", "interlude", "tag"] as const).map(
+  ...(["others", "other", "altro", "interludio", "interlude", "tag"] as const).map(
     (w) => [w, "other"] as const,
   ),
 ]);
@@ -58,14 +58,3 @@ export function parseLabel(line: string): Label | undefined {
   if (kind === undefined) return undefined;
   return digits === undefined ? { kind } : { kind, number: Number(digits) };
 }
-
-/** Etichetta leggibile (inglese, la piu' diffusa tra i programmi) per l'esportazione. */
-export const EXPORT_LABEL: Readonly<Record<SectionKind, string>> = {
-  verse: "Verse",
-  chorus: "Chorus",
-  "pre-chorus": "Pre-Chorus",
-  bridge: "Bridge",
-  intro: "Intro",
-  ending: "Ending",
-  other: "Other",
-};

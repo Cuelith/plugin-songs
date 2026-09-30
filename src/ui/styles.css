@@ -54,6 +54,11 @@ textarea.cl-input {
   text-overflow: ellipsis;
 }
 
+/* I pulsanti non vanno mai a capo (se serve va a capo la fila). */
+.cl-btn {
+  white-space: nowrap;
+}
+
 .s-small {
   min-height: 28px;
   padding: 0 9px;
@@ -120,12 +125,19 @@ textarea.cl-input {
   gap: 2px;
 }
 
+/* Titolo su tutta la riga, pulsanti sotto a destra: niente titoli troncati. */
 .s-item {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
   border-radius: 8px;
-  padding-right: 6px;
+}
+
+.s-item-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 8px 8px;
 }
 
 .s-item:hover,
