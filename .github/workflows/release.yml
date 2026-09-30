@@ -19,8 +19,8 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: Cuelith/cuelith-sdk
-          # Finche' l'SDK non e' pubblicato su npm si usa il ramo di lavoro.
-          ref: dev
+          # Le release si costruiscono con l'SDK pubblicato (main).
+          ref: main
           path: cuelith-sdk
       - uses: pnpm/action-setup@v6
         with:
