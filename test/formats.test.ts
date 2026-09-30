@@ -59,9 +59,9 @@ describe("OpenLyrics", () => {
     expect(parseOpenLyrics(xml)).toEqual({ ...full, creditsShow: emptySong().creditsShow });
   });
 
-  it("legge un file di OpenLP con parti, accordi 0.9 e piu' lingue", () => {
+  it("legge un file con parti, accordi 0.9 e piu' lingue", () => {
     const xml = `<?xml version='1.0' encoding='UTF-8'?>
-<song xmlns="http://openlyrics.info/namespace/2009/song" version="0.9" createdIn="OpenLP 3.1">
+<song xmlns="http://openlyrics.info/namespace/2009/song" version="0.9" createdIn="Esempio 1.0">
   <properties>
     <titles><title>Amazing Grace</title></titles>
     <authors><author>John Newton</author></authors>

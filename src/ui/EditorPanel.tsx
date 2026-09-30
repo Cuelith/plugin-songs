@@ -40,7 +40,7 @@ type Loading =
   | { readonly state: "ready"; readonly edit: EditState; readonly base: ItemBase | undefined };
 
 /**
- * Pannello centrale "Editor canti" (come in OpenLP): titolo e autori
+ * Pannello centrale "Editor canti": titolo e autori
  * obbligatori, sezioni tipizzate e numerate, ordine di proiezione, crediti,
  * esportazione in OpenLyrics e ChordPro.
  */

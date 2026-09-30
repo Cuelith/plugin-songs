@@ -3,12 +3,12 @@
   "cuelith.songs.panel.songs": "Canti",
   "cuelith.songs.panel.editor": "Editor canti",
 
-  "cuelith.songs.onboarding.1.title": "I canti, come in OpenLP",
+  "cuelith.songs.onboarding.1.title": "I canti in Cuelith",
   "cuelith.songs.onboarding.1.body": "Nella colonna di sinistra c'è la nuova scheda Canti: cerca per titolo, testo, autore o numero dell'innario e premi «In scaletta». Il canto va nell'archivio una volta sola; nella scaletta finisce una copia.",
   "cuelith.songs.onboarding.2.title": "Strofe, ritornelli e ordine",
   "cuelith.songs.onboarding.2.body": "Nell'editor ogni sezione ha un tipo e un numero (V1, C1, P1, B1…). Scrivi l'ordine di proiezione, per esempio «V1 C1 V2 C1 B1 C1»: il ritornello si scrive una volta e si ripete da solo. Dentro una sezione, la riga [---] la divide in più slide.",
   "cuelith.songs.onboarding.3.title": "In diretta e con altri programmi",
-  "cuelith.songs.onboarding.3.body": "Mentre un canto è in onda, i tasti V C P B I E O portano all'inizio della prossima strofa, ritornello, pre-ritornello, bridge, intro, finale o altro. Se dopo non ce n'è, ripetono l'ultima (C ripete il ritornello). Puoi importare ed esportare i canti in OpenLyrics (OpenLP, OpenSong…) e ChordPro, anche con gli accordi.",
+  "cuelith.songs.onboarding.3.body": "Mentre un canto è in onda, i tasti V C P B I E O portano all'inizio della prossima strofa, ritornello, pre-ritornello, bridge, intro, finale o altro. Se dopo non ce n'è, ripetono l'ultima (C ripete il ritornello). Puoi importare ed esportare i canti in OpenLyrics e ChordPro, formati aperti letti da molti programmi,, anche con gli accordi.",
 
   "cuelith.songs.kind.verse": "Strofa",
   "cuelith.songs.kind.chorus": "Ritornello",

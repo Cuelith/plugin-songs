@@ -13,7 +13,7 @@ export const SONG_TYPE = "cuelith.songs.song";
 export const META_KEY = "cuelith.songs";
 
 /**
- * Tipi di sezione, come in OpenLP e OpenLyrics: la lettera e' anche il tasto
+ * Tipi di sezione, come in OpenLyrics: la lettera e' anche il tasto
  * che in diretta porta alla sezione (V C P B I E O).
  */
 export const SECTION_KINDS = [
@@ -41,7 +41,7 @@ const KIND_OF_LETTER = new Map(
   Object.entries(SECTION_LETTER).map(([kind, letter]) => [letter, kind as SectionKind]),
 );
 
-/** Righe che dividono una sezione in piu' slide (come in OpenLP). */
+/** Riga che divide una sezione in piu' slide. */
 export const SLIDE_BREAK = "[---]";
 
 export interface Section {

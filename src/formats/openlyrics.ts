@@ -12,7 +12,7 @@ import {
 import { SectionsBuilder } from "./builder.js";
 
 // OpenLyrics 0.9 (https://docs.openlyrics.org), formato principale dei canti
-// (decisione 0002): lo leggono e scrivono OpenLP, OpenSong, FreeWorship e altri.
+// (decisione 0002): formato aperto letto e scritto da molti programmi.
 
 export const OPENLYRICS_NAMESPACE = "http://openlyrics.info/namespace/2009/song";
 /** Oltre questa dimensione un file non e' un canto. */

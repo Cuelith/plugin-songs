@@ -1,6 +1,6 @@
 # Canti — modulo di Cuelith
 
-Canti con strofe, ritornelli e ordine di proiezione, come in OpenLP.
+Canti con strofe, ritornelli e ordine di proiezione.
 
 ## Cosa fa
 
@@ -14,7 +14,7 @@ Canti con strofe, ritornelli e ordine di proiezione, come in OpenLP.
   - crediti e copyright (CCLI, editore, anno), tonalità, tempo, innari con numero, tag, note.
 - **In diretta** i tasti `V C P B I E O` portano alla prossima sezione di quel tipo.
 - **Importazione** di file OpenLyrics (`.xml`), ChordPro (`.cho`, `.chordpro`, `.chopro`, `.crd`, `.pro`) e testo semplice (`.txt`), anche trascinandoli sulla scheda. Nel testo semplice si riconoscono etichette come «Strofa 2», «Rit.», «[Chorus]», «Bridge:».
-- **Esportazione** in OpenLyrics 0.9 (OpenLP, OpenSong, FreeWorship…) e ChordPro.
+- **Esportazione** in OpenLyrics 0.9 e ChordPro, formati aperti letti da molti programmi; **«Esporta tutti…»** salva tutti i canti in un unico file ChordPro (backup), che «Importa…» rilegge.
 
 ## Sviluppo
 
