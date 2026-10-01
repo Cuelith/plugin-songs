@@ -69,7 +69,6 @@
   "cuelith.songs.field.orderPlaceholder": "Es. V1 C1 V2 C1 (vuoto = ordine delle sezioni)",
   "cuelith.songs.field.orderAdd": "Aggiungi all'ordine",
   "cuelith.songs.field.orderResult": "Si proietta:",
-  "cuelith.songs.field.orderKeys": "In diretta i tasti {keys} portano all'inizio della prossima sezione di quel tipo.",
   "cuelith.songs.field.credits": "Crediti e copyright",
   "cuelith.songs.field.copyright": "Copyright",
   "cuelith.songs.field.publisher": "Editore",

@@ -10,7 +10,6 @@ import {
   projectionOrder,
   SECTION_KINDS,
   SECTION_LABEL,
-  SECTION_LETTER,
   sectionId,
   songToItem,
   SLIDE_BREAK,
@@ -387,10 +386,12 @@ export function EditorPanel() {
           </fieldset>
 
           <fieldset className="s-group">
-            <legend className="cl-label">
+            <legend
+              className="cl-label"
+              title={t("cuelith.songs.field.sectionsHint", { mark: SLIDE_BREAK })}
+            >
               {t("cuelith.songs.field.sections")} <span className="s-required">*</span>
             </legend>
-            <p className="s-hint">{t("cuelith.songs.field.sectionsHint", { mark: SLIDE_BREAK })}</p>
             {edit.sections.map((section, index) => {
               const id = sectionId(section);
               const duplicate = sectionIds.indexOf(id) !== index;
@@ -552,13 +553,6 @@ export function EditorPanel() {
             <p className="s-hint" data-testid="song-order">
               {t("cuelith.songs.field.orderResult")}{" "}
               <span className="s-mono">{shownOrder.map((id) => id.toUpperCase()).join(" → ")}</span>
-            </p>
-            <p className="s-hint">
-              {t("cuelith.songs.field.orderKeys", {
-                keys: Object.values(SECTION_LETTER)
-                  .map((l) => l.toUpperCase())
-                  .join(" "),
-              })}
             </p>
           </fieldset>
 
@@ -736,12 +730,12 @@ function Field({
   children: ReactNode;
 }) {
   return (
-    <label className="s-field">
+    // La spiegazione resta al passaggio del mouse: niente scritte fisse nell'interfaccia.
+    <label className="s-field" title={hint}>
       <span className="cl-label">
         {label} {required && <span className="s-required">*</span>}
       </span>
       {children}
-      {hint !== undefined && <span className="s-hint">{hint}</span>}
     </label>
   );
 }
