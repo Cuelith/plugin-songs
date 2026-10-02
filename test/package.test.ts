@@ -48,4 +48,14 @@ describe("pacchetto del modulo", () => {
       "Others",
     ]);
   });
+
+  it("il catalogo inglese ha le stesse chiavi e gli stessi segnaposto di quello italiano", () => {
+    const it = CatalogSchema.parse(readJson("locales/it.json"));
+    const en = CatalogSchema.parse(readJson("locales/en.json"));
+    expect(Object.keys(en).sort()).toEqual(Object.keys(it).sort());
+    const marks = (text: string) => (text.match(/\{\w+\}/g) ?? []).sort().join();
+    expect(Object.keys(it).filter((key) => marks(it[key] ?? "") !== marks(en[key] ?? ""))).toEqual(
+      [],
+    );
+  });
 });
