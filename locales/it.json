@@ -102,7 +102,7 @@
   "cuelith.songs.error.yearInvalid": "L'anno va scritto con quattro cifre.",
   "cuelith.songs.error.fileTooLarge": "Il file è troppo grande per essere un canto.",
   "cuelith.songs.error.notOpenLyrics": "Il file non è un canto OpenLyrics valido.",
-  "cuelith.songs.error.forbidden": "Il modulo non ha il permesso per questa operazione.",
+  "cuelith.songs.error.forbidden": "Il plugin non ha il permesso per questa operazione.",
   "cuelith.songs.error.notFound": "Il canto non c'è più nell'archivio.",
   "cuelith.songs.error.call": "Operazione non riuscita (codice {code}).",
   "cuelith.songs.error.unexpected": "Si è verificato un errore imprevisto.",

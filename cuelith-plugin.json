@@ -9,7 +9,7 @@
   "repository": "https://github.com/Cuelith/plugin-songs",
   "family": "function",
   "icon": "icon.svg",
-  "engines": { "cuelith": "^0.1.0", "protocol": "^1.6.0" },
+  "engines": { "cuelith": ">=0.1.0 <1.0.0", "protocol": "^1.6.0" },
   "runtime": { "type": "none" },
   "ui": { "entry": "ui/index.html" },
   "permissions": [],
