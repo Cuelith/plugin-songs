@@ -32,4 +32,4 @@ Il pacchetto si installa da Cuelith: **Moduli → Installati → Installa da fil
 
 ## Licenza
 
-Apache 2.0.
+GPL 3.0 or later (see [LICENSE](LICENSE)). Versions up to 0.5.0 were published under Apache 2.0 and stay available under it.

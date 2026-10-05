@@ -10,4 +10,5 @@ Modulo Canti di Cuelith (`cuelith.songs`). Fonte di verità: il documento di pro
 - Durante lo sviluppo l'SDK arriva da `link:../cuelith-sdk/packages/*` (repo affiancati); la CI fa lo stesso.
 - `pnpm check` prima di ogni commit; `pnpm build` crea `dist/cuelith.songs-<versione>.cpkg` e stampa impronta e dimensione per il registry.
 - Lavoro su `dev`; `main` riceve solo release taggate (SemVer). Il tag `v*` pubblica il pacchetto nella release di GitHub.
+- **Licenza GPL 3.0 o successiva** (decisione 0012), come il nucleo. Il plugin parla col nucleo solo con protocollo e SDK (Apache): non copiare codice di `cuelith-core`. Le versioni già pubblicate restano Apache; il registry cambia licenza al prossimo rilascio del plugin.
 - Rispondi al fondatore sempre in italiano.
