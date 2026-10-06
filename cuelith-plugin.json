@@ -1,9 +1,9 @@
 {
   "$schema": "https://cuelith.github.io/cuelith-sdk/schema/plugin-1.json",
   "id": "cuelith.songs",
-  "name": "Canti",
-  "description": "Canti con strofe, ritornelli e ordine di proiezione. Importa ed esporta OpenLyrics e ChordPro.",
-  "version": "0.5.1",
+  "name": "Brani",
+  "description": "Brani con strofe, ritornelli e ordine di proiezione. Importa ed esporta OpenLyrics e ChordPro.",
+  "version": "0.5.2",
   "publisher": "Cuelith",
   "license": "GPL-3.0-or-later",
   "repository": "https://github.com/Cuelith/plugin-songs",
