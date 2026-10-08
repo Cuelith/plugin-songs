@@ -16,6 +16,10 @@ body {
   background: var(--cl-bg);
 }
 
+#root {
+  height: 100%;
+}
+
 button,
 input,
 select,
@@ -319,4 +323,274 @@ textarea.cl-input {
   width: 100%;
   resize: vertical;
   font-family: var(--cl-body);
+}
+
+/* ======================================================================
+   Rifinitura (0.6): pannello compatto, editor ordinato, anteprima delle slide
+   ====================================================================== */
+
+/* ---------- Pannello laterale ---------- */
+
+.s-songs {
+  gap: 6px;
+  padding: 10px 10px 0;
+}
+
+.s-search {
+  display: flex;
+  gap: 6px;
+}
+
+.s-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 34px;
+}
+
+.s-new {
+  min-height: 34px;
+  padding: 0 12px;
+}
+
+.s-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  min-height: 24px;
+  font-size: 12px;
+  color: var(--cl-muted);
+}
+
+.s-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.s-library {
+  min-height: 26px;
+  max-width: 50%;
+  padding: 0 6px;
+  font-size: 12px;
+}
+
+.s-link {
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--cl-muted);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.s-link:hover {
+  color: var(--cl-fg);
+}
+
+.s-link:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.s-list {
+  flex: 1 1 auto;
+  align-content: start;
+}
+
+.s-item-main {
+  padding: 7px 10px;
+}
+
+.s-number {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--cl-mod-chip);
+  font-size: 11px;
+}
+
+/* La barra delle azioni resta in fondo al pannello: sempre nello stesso posto. */
+.s-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  margin: 0 -10px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--cl-line);
+  background: var(--cl-bg-2);
+}
+
+/* ---------- Editor ---------- */
+
+.s-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 8px 14px;
+}
+
+.s-toolbar .cl-btn {
+  min-height: 32px;
+}
+
+.s-columns {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 16px;
+}
+
+.s-title {
+  min-height: 46px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.s-group {
+  padding: 10px 12px;
+  background: var(--cl-bg);
+}
+
+/* Salto rapido alle sezioni: resta in vista mentre si scorre. */
+.s-jump {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 0;
+  background: var(--cl-bg);
+}
+
+.s-jump-chip {
+  padding: 3px 9px;
+  border: 1px solid var(--kind, var(--cl-line-2));
+  border-radius: 999px;
+  background: none;
+  color: var(--cl-fg);
+  font: 700 11px var(--cl-mono);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.s-jump-chip:hover {
+  background: var(--cl-bg-3);
+}
+
+[data-kind="verse"] {
+  --kind: var(--cl-mod);
+}
+
+[data-kind="chorus"] {
+  --kind: var(--cl-cue);
+}
+
+[data-kind="pre-chorus"] {
+  --kind: color-mix(in srgb, var(--cl-cue) 55%, var(--cl-mod));
+}
+
+[data-kind="bridge"] {
+  --kind: var(--cl-stage);
+}
+
+[data-kind="intro"],
+[data-kind="ending"],
+[data-kind="other"] {
+  --kind: var(--cl-faint);
+}
+
+.s-section {
+  padding: 8px 10px;
+  border-left: 3px solid var(--kind, var(--cl-line-2));
+  border-radius: 6px 8px 8px 6px;
+}
+
+.s-section .cl-input {
+  min-height: 30px;
+}
+
+.s-section select.cl-input {
+  max-width: 160px;
+}
+
+.s-slides {
+  color: var(--cl-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.s-text {
+  min-height: 84px;
+  font-size: 14px;
+}
+
+/* Cosa vede il pubblico, nell'ordine di proiezione. */
+.s-slide-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.s-slide {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--cl-bg-2);
+  border-left: 3px solid var(--kind, var(--cl-line-2));
+}
+
+.s-badge--mini {
+  min-width: 30px;
+  padding: 2px 5px;
+  font-size: 10px;
+}
+
+.s-slide-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: center;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* Crediti e altri dati: chiusi, si aprono solo se servono. */
+.s-details {
+  padding: 0;
+}
+
+.s-details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.s-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.s-details > summary::after {
+  content: "▾";
+  color: var(--cl-faint);
+}
+
+.s-details[open] > summary::after {
+  content: "▴";
+}
+
+.s-details[open] {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 12px;
+}
+
+.s-details > :not(summary) {
+  margin-inline: 12px;
 }

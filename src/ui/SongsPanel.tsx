@@ -216,19 +216,52 @@ export function SongsPanel() {
       }}
       onDrop={onDrop}
     >
-      <div className="s-row s-wrap">
+      <div className="s-search">
+        <input
+          type="search"
+          className="cl-input s-search-input"
+          value={query}
+          aria-label={t("cuelith.songs.search.label")}
+          placeholder={t("cuelith.songs.search.placeholder")}
+          onChange={(event) => {
+            setQuery(event.target.value);
+          }}
+        />
         <button
           type="button"
-          className="cl-btn cl-btn--cue s-grow"
+          className="cl-btn cl-btn--cue s-new"
           onClick={() => {
             openEditor(selectedLibrary === "" ? {} : { libraryId: selectedLibrary });
           }}
         >
           {t("cuelith.songs.action.new")}
         </button>
+      </div>
+
+      <div className="s-meta">
+        <span className="s-count" aria-live="polite">
+          {items === undefined ? "" : t("cuelith.songs.count", { count: items.length })}
+        </span>
+        <select
+          className="cl-input s-library"
+          value={selectedLibrary}
+          aria-label={t("cuelith.songs.library.label")}
+          hidden={libraries.length === 0}
+          onChange={(event) => {
+            setLibraryId(event.target.value);
+          }}
+        >
+          <option value="">{t("cuelith.songs.library.all")}</option>
+          {libraries.map((library) => (
+            <option key={library.id} value={library.id}>
+              {library.code === undefined ? library.name : `${library.code} · ${library.name}`}
+            </option>
+          ))}
+        </select>
+        <span className="s-grow" />
         <button
           type="button"
-          className="cl-btn"
+          className="s-link"
           disabled={busy}
           onClick={() => fileInput.current?.click()}
         >
@@ -236,7 +269,7 @@ export function SongsPanel() {
         </button>
         <button
           type="button"
-          className="cl-btn"
+          className="s-link"
           disabled={busy}
           title={t("cuelith.songs.action.exportAllHint")}
           onClick={() => void exportAll()}
@@ -256,80 +289,6 @@ export function SongsPanel() {
             void importFiles(files);
           }}
         />
-      </div>
-
-      <input
-        type="search"
-        className="cl-input"
-        value={query}
-        aria-label={t("cuelith.songs.search.label")}
-        placeholder={t("cuelith.songs.search.placeholder")}
-        onChange={(event) => {
-          setQuery(event.target.value);
-        }}
-      />
-      <select
-        className="cl-input"
-        value={selectedLibrary}
-        aria-label={t("cuelith.songs.library.label")}
-        onChange={(event) => {
-          setLibraryId(event.target.value);
-        }}
-      >
-        <option value="">{t("cuelith.songs.library.all")}</option>
-        {libraries.map((library) => (
-          <option key={library.id} value={library.id}>
-            {library.code === undefined ? library.name : `${library.code} · ${library.name}`}
-          </option>
-        ))}
-      </select>
-
-      {/* Azioni fisse sulla selezione: sempre nello stesso posto. */}
-      <div className="s-actions" role="toolbar" aria-label={t("cuelith.songs.actions.label")}>
-        <button
-          type="button"
-          className="cl-btn s-small"
-          disabled={single === undefined}
-          onClick={() => {
-            if (single !== undefined) sendDirect(single, "preview");
-          }}
-        >
-          {t("cuelith.songs.action.preview")}
-        </button>
-        <button
-          type="button"
-          className="cl-btn cl-btn--live s-small"
-          disabled={single === undefined}
-          onClick={() => {
-            if (single !== undefined) sendDirect(single, "program");
-          }}
-        >
-          {t("cuelith.songs.action.live")}
-        </button>
-        <button
-          type="button"
-          className="cl-btn s-small"
-          disabled={selection.length === 0}
-          onClick={() => void addToPlaylist(selection)}
-        >
-          {t("cuelith.songs.action.add")}
-        </button>
-        <button
-          type="button"
-          className="cl-btn s-small"
-          disabled={selection.length > 1}
-          onClick={() => {
-            openEditor(
-              single !== undefined
-                ? { libraryItemId: single }
-                : selectedLibrary === ""
-                  ? {}
-                  : { libraryId: selectedLibrary },
-            );
-          }}
-        >
-          {t("cuelith.songs.action.editor")}
-        </button>
       </div>
 
       {report !== undefined && (
@@ -410,6 +369,54 @@ export function SongsPanel() {
           })}
         </ul>
       )}
+
+      {/* Azioni fisse sulla selezione: in fondo, sempre nello stesso posto. */}
+      <div className="s-actions" role="toolbar" aria-label={t("cuelith.songs.actions.label")}>
+        <button
+          type="button"
+          className="cl-btn s-small"
+          disabled={single === undefined}
+          onClick={() => {
+            if (single !== undefined) sendDirect(single, "preview");
+          }}
+        >
+          {t("cuelith.songs.action.preview")}
+        </button>
+        <button
+          type="button"
+          className="cl-btn cl-btn--live s-small"
+          disabled={single === undefined}
+          onClick={() => {
+            if (single !== undefined) sendDirect(single, "program");
+          }}
+        >
+          {t("cuelith.songs.action.live")}
+        </button>
+        <button
+          type="button"
+          className="cl-btn s-small"
+          disabled={selection.length === 0}
+          onClick={() => void addToPlaylist(selection)}
+        >
+          {t("cuelith.songs.action.add")}
+        </button>
+        <button
+          type="button"
+          className="cl-btn s-small"
+          disabled={selection.length > 1}
+          onClick={() => {
+            openEditor(
+              single !== undefined
+                ? { libraryItemId: single }
+                : selectedLibrary === ""
+                  ? {}
+                  : { libraryId: selectedLibrary },
+            );
+          }}
+        >
+          {t("cuelith.songs.action.editor")}
+        </button>
+      </div>
     </div>
   );
 }

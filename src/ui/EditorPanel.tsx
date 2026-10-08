@@ -13,6 +13,8 @@ import {
   sectionId,
   songToItem,
   SLIDE_BREAK,
+  splitSlides,
+  stripChords,
   type ItemBase,
   type SongIssue,
 } from "../model/song.js";
@@ -177,6 +179,20 @@ export function EditorPanel() {
   const sectionIds = edit.sections.map(sectionId);
   const order = parseOrder(edit.order);
   const shownOrder = projectionOrder({ sections: edit.sections, order });
+  // Cosa vede il pubblico: le slide nell'ordine di proiezione, senza accordi.
+  const previewSlides = shownOrder.flatMap((id, position) => {
+    const section = edit.sections.find((s) => sectionId(s) === id);
+    if (section === undefined) return [];
+    return splitSlides(section.text).map((text, index) => ({
+      key: `${String(position)}-${String(index)}`,
+      id,
+      kind: section.kind,
+      text: stripChords(text),
+    }));
+  });
+  const jumpTo = (key: number) => {
+    document.getElementById(`s-section-${String(key)}`)?.scrollIntoView({ block: "nearest" });
+  };
 
   // Niente <form>: nei pannelli isolati (sandbox senza allow-forms) l'invio e' bloccato.
   return (
@@ -280,7 +296,7 @@ export function EditorPanel() {
         <div className="s-main">
           <Field label={t("cuelith.songs.field.title")} required>
             <input
-              className="cl-input"
+              className="cl-input s-title"
               value={edit.title}
               autoFocus={isNew}
               onChange={(e) => {
@@ -288,19 +304,6 @@ export function EditorPanel() {
               }}
             />
           </Field>
-          <Field
-            label={t("cuelith.songs.field.altTitles")}
-            hint={t("cuelith.songs.field.altTitlesHint")}
-          >
-            <input
-              className="cl-input"
-              value={edit.altTitles}
-              onChange={(e) => {
-                set("altTitles", e.target.value);
-              }}
-            />
-          </Field>
-
           <fieldset className="s-group">
             <legend className="cl-label">
               {t("cuelith.songs.field.authors")} <span className="s-required">*</span>
@@ -392,11 +395,32 @@ export function EditorPanel() {
             >
               {t("cuelith.songs.field.sections")} <span className="s-required">*</span>
             </legend>
+            <nav className="s-jump" aria-label={t("cuelith.songs.editor.jump")}>
+              {edit.sections.map((section) => (
+                <button
+                  key={section.key}
+                  type="button"
+                  className="s-jump-chip"
+                  data-kind={section.kind}
+                  onClick={() => {
+                    jumpTo(section.key);
+                  }}
+                >
+                  {sectionId(section).toUpperCase()}
+                </button>
+              ))}
+            </nav>
             {edit.sections.map((section, index) => {
               const id = sectionId(section);
               const duplicate = sectionIds.indexOf(id) !== index;
               return (
-                <div key={section.key} className="s-section" data-section={id}>
+                <div
+                  key={section.key}
+                  id={`s-section-${String(section.key)}`}
+                  className="s-section"
+                  data-section={id}
+                  data-kind={section.kind}
+                >
                   <div className="s-row">
                     <span className={`s-badge${duplicate ? " s-badge--error" : ""}`}>
                       {id.toUpperCase()}
@@ -439,6 +463,11 @@ export function EditorPanel() {
                       }}
                     />
                     <span className="s-grow" />
+                    <span className="s-slides">
+                      {t("cuelith.songs.editor.slides", {
+                        count: splitSlides(section.text).filter((x) => x !== "").length,
+                      })}
+                    </span>
                     <button
                       type="button"
                       className="cl-btn s-small"
@@ -556,8 +585,29 @@ export function EditorPanel() {
             </p>
           </fieldset>
 
-          <fieldset className="s-group">
-            <legend className="cl-label">{t("cuelith.songs.field.credits")}</legend>
+          <section className="s-group s-preview" aria-label={t("cuelith.songs.editor.preview")}>
+            <h3 className="cl-label">{t("cuelith.songs.editor.preview")}</h3>
+            {previewSlides.every((slide) => slide.text === "") ? (
+              <p className="s-hint">{t("cuelith.songs.editor.previewEmpty")}</p>
+            ) : (
+              <ol className="s-slide-list">
+                {previewSlides.map((slide) => (
+                  <li
+                    key={slide.key}
+                    className="s-slide"
+                    data-section={slide.id}
+                    data-kind={slide.kind}
+                  >
+                    <span className="s-badge s-badge--mini">{slide.id.toUpperCase()}</span>
+                    <span className="s-slide-text">{slide.text}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+
+          <details className="s-group s-details">
+            <summary className="cl-label">{t("cuelith.songs.field.credits")}</summary>
             <Field label={t("cuelith.songs.field.copyright")}>
               <input
                 className="cl-input"
@@ -612,10 +662,23 @@ export function EditorPanel() {
                 <option value="none">{t("cuelith.songs.creditsShow.none")}</option>
               </select>
             </Field>
-          </fieldset>
+          </details>
 
-          <fieldset className="s-group">
-            <legend className="cl-label">{t("cuelith.songs.field.details")}</legend>
+          <details className="s-group s-details">
+            <summary className="cl-label">{t("cuelith.songs.field.details")}</summary>
+            <Field
+              label={t("cuelith.songs.field.altTitles")}
+              hint={t("cuelith.songs.field.altTitlesHint")}
+            >
+              <input
+                className="cl-input"
+                value={edit.altTitles}
+                onChange={(e) => {
+                  set("altTitles", e.target.value);
+                }}
+              />
+            </Field>
+
             <div className="s-row">
               <Field label={t("cuelith.songs.field.key")}>
                 <input
@@ -711,7 +774,7 @@ export function EditorPanel() {
                 }}
               />
             </Field>
-          </fieldset>
+          </details>
         </aside>
       </div>
     </div>
