@@ -123,5 +123,8 @@
   "cuelith.songs.editor.tabs": "Schede del brano",
   "cuelith.songs.tab.text": "Testo",
   "cuelith.songs.tab.credits": "Autori e crediti",
-  "cuelith.songs.tab.more": "Altri dati"
+  "cuelith.songs.tab.more": "Altri dati",
+  "cuelith.songs.action.exportWithFormat": "Con la formattazione di Cuelith",
+  "cuelith.songs.action.exportWithFormatHint": "Tiene anche le parole ingrandite, colorate, con bordo. Gli altri programmi non la usano e leggono il testo di sempre.",
+  "cuelith.songs.notice.formatNotExported": "Esportato senza la formattazione delle parole. Per tenerla scegli «Con la formattazione di Cuelith»."
 }

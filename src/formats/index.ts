@@ -58,7 +58,8 @@ const NEW_SONG = /^[ \t]*\{[ \t]*(?:new_song|ns)[ \t]*\}[ \t]*$/im;
  * dell'archivio dei canti, che «Importa» rilegge.
  */
 export function toChordProCollection(songs: readonly Song[]): string {
-  return songs.map(toChordPro).join("\n{new_song}\n\n");
+  // Una copia di sicurezza tiene tutto: anche le parole formattate di Cuelith.
+  return songs.map((song) => toChordPro(song, { formatting: true })).join("\n{new_song}\n\n");
 }
 
 /** Legge uno o piu' canti da un file (un ChordPro puo' contenerne molti). */

@@ -77,6 +77,8 @@ export function EditorPanel() {
   const [saving, setSaving] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
   const [tab, setTab] = useState<EditorTab>("text");
+  // Esportare tenendo anche le parole formattate di Cuelith (gli altri programmi le ignorano).
+  const [withFormat, setWithFormat] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -191,15 +193,18 @@ export function EditorPanel() {
     const song = ready();
     if (song === undefined) return;
     const name = song.title.replace(/[\\/:*?"<>|]+/g, " ").trim() || "canto";
+    const formatting = withFormat;
     const promise =
       format === "openlyrics"
         ? panel.saveFile(
             `${name}.xml`,
-            toOpenLyrics(song, { version: __SONGS_VERSION__ }),
+            toOpenLyrics(song, { version: __SONGS_VERSION__, formatting }),
             "application/xml",
           )
-        : panel.saveFile(`${name}.cho`, toChordPro(song), "text/plain");
+        : panel.saveFile(`${name}.cho`, toChordPro(song, { formatting }), "text/plain");
     promise.catch(() => undefined);
+    // Esportato pulito: se il canto ha parole formattate, si dice che non partono (una volta per esportazione).
+    if (!formatting && hasFormatting) void panel.notify("cuelith.songs.notice.formatNotExported");
   };
 
   const close = () => {
@@ -208,6 +213,7 @@ export function EditorPanel() {
   };
 
   const tabsWithIssues = new Set(issues.map((issue) => tabOfIssue(issue.key)));
+  const hasFormatting = edit.sections.some((section) => section.spans.length > 0);
   const sectionIds = edit.sections.map(sectionId);
   const order = parseOrder(edit.order);
   const shownOrder = projectionOrder({ sections: edit.sections, order });
@@ -251,6 +257,18 @@ export function EditorPanel() {
           </span>
           {dirty && <span className="s-dirty">{t("cuelith.songs.editor.unsaved")}</span>}
         </div>
+        {hasFormatting && (
+          <label className="s-check s-small" title={t("cuelith.songs.action.exportWithFormatHint")}>
+            <input
+              type="checkbox"
+              checked={withFormat}
+              onChange={(event) => {
+                setWithFormat(event.target.checked);
+              }}
+            />
+            {t("cuelith.songs.action.exportWithFormat")}
+          </label>
+        )}
         <button
           type="button"
           className="cl-btn s-small"

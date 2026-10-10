@@ -123,5 +123,8 @@
   "cuelith.songs.editor.tabs": "Song tabs",
   "cuelith.songs.tab.text": "Text",
   "cuelith.songs.tab.credits": "Authors and credits",
-  "cuelith.songs.tab.more": "Other data"
+  "cuelith.songs.tab.more": "Other data",
+  "cuelith.songs.action.exportWithFormat": "With Cuelith formatting",
+  "cuelith.songs.action.exportWithFormatHint": "Also keeps enlarged, coloured or outlined words. Other programs do not use it and read the usual text.",
+  "cuelith.songs.notice.formatNotExported": "Exported without the word formatting. To keep it choose \"With Cuelith formatting\"."
 }

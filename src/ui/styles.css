@@ -648,3 +648,11 @@ textarea.cl-input {
   max-width: 760px;
   padding: 14px;
 }
+
+.s-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--cl-muted);
+  cursor: pointer;
+}

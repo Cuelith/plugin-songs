@@ -1,3 +1,4 @@
+import type { Span } from "@cuelith/protocol";
 import { nextNumber, sectionId, type Section, type SectionKind } from "../model/song.js";
 
 /**
@@ -6,7 +7,12 @@ import { nextNumber, sectionId, type Section, type SectionKind } from "../model/
  * diventa una ripetizione nell'ordine invece di una sezione in piu'.
  */
 export class SectionsBuilder {
-  private readonly sections: { kind: SectionKind; number: number; slides: string[] }[] = [];
+  private readonly sections: {
+    kind: SectionKind;
+    number: number;
+    slides: string[];
+    spans: (readonly Span[])[];
+  }[] = [];
   private readonly sequence: string[] = [];
 
   /** Aggiunge una sezione; restituisce il suo nome ("c1"). */
@@ -14,6 +20,7 @@ export class SectionsBuilder {
     kind: SectionKind | undefined,
     number: number | undefined,
     slides: readonly string[],
+    spans: readonly (readonly Span[])[] = [],
   ): string {
     const text = slides.join("\n\n");
     // Testo identico a una sezione gia' letta: e' una ripetizione.
@@ -33,6 +40,7 @@ export class SectionsBuilder {
       kind: finalKind,
       number: number === undefined || taken ? nextNumber(this.sections, finalKind) : number,
       slides: [...slides],
+      spans: slides.map((_, index) => spans[index] ?? []),
     };
     this.sections.push(section);
     const id = sectionId(section);
@@ -52,10 +60,11 @@ export class SectionsBuilder {
   }
 
   /** Aggiunge slide all'ultima sezione (es. le parti "v1a", "v1b" di OpenLyrics). */
-  append(id: string, slides: readonly string[]): boolean {
+  append(id: string, slides: readonly string[], spans: readonly (readonly Span[])[] = []): boolean {
     const section = this.sections.find((s) => sectionId(s) === id);
     if (section === undefined) return false;
     section.slides.push(...slides);
+    section.spans.push(...slides.map((_, index) => spans[index] ?? []));
     return true;
   }
 
@@ -65,7 +74,12 @@ export class SectionsBuilder {
 
   /** Sezioni e ordine; l'ordine resta vuoto se coincide con quello delle sezioni. */
   finish(): { sections: Section[]; order: string[] } {
-    const sections = this.sections.map((s) => ({ ...s, slides: [...s.slides] }));
+    const sections: Section[] = this.sections.map(({ spans, ...s }) => ({
+      ...s,
+      slides: [...s.slides],
+      // Le parole formattate (di altri programmi) restano solo se ce n'e' almeno una.
+      ...(spans.some((own) => own.length > 0) ? { spans: spans.map((own) => [...own]) } : {}),
+    }));
     const natural = sections.map(sectionId);
     const same =
       this.sequence.length === natural.length && this.sequence.every((id, i) => id === natural[i]);

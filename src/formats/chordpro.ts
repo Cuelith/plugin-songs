@@ -11,6 +11,7 @@ import {
   type Songbook,
 } from "../model/song.js";
 import { SectionsBuilder } from "./builder.js";
+import { applyFormat, encodeFormat } from "./extension.js";
 import { parseLabel, type Label } from "./labels.js";
 
 // ChordPro (https://www.chordpro.org), formato secondario (decisione 0002):
@@ -132,6 +133,8 @@ export function parseChordPro(source: string): Song {
     if (slides.length > 0) builder.add(current.kind, current.number, slides);
   };
 
+  let formatBlock: string | undefined;
+
   const meta = (name: string, value: string) => {
     const key = name.toLowerCase();
     const role = AUTHOR_DIRECTIVES[key];
@@ -184,6 +187,9 @@ export function parseChordPro(source: string): Song {
         if (name !== "") song.songbooks.push(entry ? { name, entry } : { name });
         return;
       }
+      case "cuelith_format":
+        formatBlock = value;
+        return;
       case "cuelith_comment":
         song.comment = value;
         return;
@@ -270,11 +276,14 @@ export function parseChordPro(source: string): Song {
   const { sections, order } = builder.finish();
   const ids = new Set(sections.map(sectionId));
   const useExplicit = explicitOrder !== undefined && explicitOrder.every((id) => ids.has(id));
-  return {
-    ...song,
-    sections: sections.length === 0 ? emptySong().sections : sections,
-    order: useExplicit ? (explicitOrder ?? []) : order,
-  };
+  return applyFormat(
+    {
+      ...song,
+      sections: sections.length === 0 ? emptySong().sections : sections,
+      order: useExplicit ? (explicitOrder ?? []) : order,
+    },
+    formatBlock,
+  );
 }
 
 // ---------- Esportazione ----------
@@ -313,7 +322,7 @@ function sectionBlock(section: Section): string {
   return [`{start_of_${env}: ${label}}`, section.slides.join("\n\n"), `{end_of_${env}}`].join("\n");
 }
 
-export function toChordPro(song: Song): string {
+export function toChordPro(song: Song, options: { formatting?: boolean } = {}): string {
   const lines: string[] = [`{title: ${oneLine(song.title)}}`];
   for (const alt of song.altTitles) lines.push(`{subtitle: ${oneLine(alt)}}`);
   for (const author of song.authors) {
@@ -333,5 +342,9 @@ export function toChordPro(song: Song): string {
   if (song.comment) lines.push(`{meta: cuelith_comment ${oneLine(song.comment)}}`);
   if (song.order.length > 0) lines.push(`{meta: cuelith_order ${song.order.join(" ")}}`);
   lines.push(`{meta: cuelith_credits ${song.creditsShow}}`);
+  // Le parole formattate di Cuelith (solo se richieste): una riga {meta: ...} come gli altri dati
+  // che ChordPro non prevede; gli altri programmi la ignorano.
+  const format = options.formatting === true ? encodeFormat(song) : undefined;
+  if (format !== undefined) lines.push(`{meta: cuelith_format ${format}}`);
   return `${lines.join("\n")}\n\n${song.sections.map(sectionBlock).join("\n\n")}\n`;
 }

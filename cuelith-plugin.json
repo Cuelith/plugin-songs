@@ -3,7 +3,7 @@
   "id": "cuelith.songs",
   "name": "Brani",
   "description": "Brani con strofe, ritornelli e ordine di proiezione. Importa ed esporta OpenLyrics e ChordPro.",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "publisher": "Cuelith",
   "license": "GPL-3.0-or-later",
   "repository": "https://github.com/Cuelith/plugin-songs",

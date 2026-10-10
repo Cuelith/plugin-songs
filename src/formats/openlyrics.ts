@@ -1,4 +1,4 @@
-import type { Author } from "@cuelith/protocol";
+import { remapSpans, type Author, type Span, type SpanStyle } from "@cuelith/protocol";
 import { XMLParser } from "fast-xml-parser";
 import {
   emptySong,
@@ -9,7 +9,9 @@ import {
   type Song,
   type Songbook,
 } from "../model/song.js";
+import { keepOf } from "../model/rich.js";
 import { SectionsBuilder } from "./builder.js";
+import { applyFormat, encodeFormat, OPENLYRICS_FORMAT_NAMESPACE } from "./extension.js";
 
 // OpenLyrics 0.9 (https://docs.openlyrics.org), formato principale dei canti
 // (decisione 0002): formato aperto letto e scritto da molti programmi.
@@ -84,28 +86,75 @@ function chordName(attrs: Record<string, string>): string {
   return `${root}${STRUCTURE[structure] ?? structure}${bass}`;
 }
 
-/** Contenuto di <lines>: righe con gli accordi in linea ("[G]Santo"). */
-function linesText(nodes: readonly XmlNode[]): string {
+/**
+ * Come OpenLP e altri programmi chiamano i tag di formattazione dentro le righe (OpenLyrics li
+ * dichiara in <format>): quelli che sappiamo leggere diventano parole formattate; gli altri
+ * lasciano il testo com'e'. Una lettura sbagliata di un nome qui non rovina mai il testo.
+ */
+const FORMAT_TAGS: Readonly<Record<string, SpanStyle>> = {
+  b: { bold: true },
+  bold: { bold: true },
+  st: { bold: true },
+  strong: { bold: true },
+  i: { italic: true },
+  it: { italic: true },
+  italic: { italic: true },
+  em: { italic: true },
+  r: { color: "#FF0000" },
+  red: { color: "#FF0000" },
+  y: { color: "#FFD700" },
+  yellow: { color: "#FFD700" },
+  g: { color: "#00B050" },
+  green: { color: "#00B050" },
+  bl: { color: "#3A7BFF" },
+  blue: { color: "#3A7BFF" },
+  o: { color: "#FF8C00" },
+  orange: { color: "#FF8C00" },
+  pk: { color: "#FF69B4" },
+  pink: { color: "#FF69B4" },
+  p: { color: "#9B59B6" },
+  purple: { color: "#9B59B6" },
+  w: { color: "#FFFFFF" },
+  white: { color: "#FFFFFF" },
+};
+
+/**
+ * Contenuto di <lines>: righe con gli accordi in linea ("[G]Santo") e, se il file ha dei tag di
+ * formattazione che conosciamo, le parole formattate nelle posizioni del testo che esce.
+ */
+function linesRich(nodes: readonly XmlNode[]): { text: string; spans: Span[] } {
   let out = "";
-  const walk = (list: readonly XmlNode[]) => {
+  const raw: Span[] = [];
+  const walk = (list: readonly XmlNode[], style: SpanStyle) => {
     for (const node of list) {
       const tag = tagOf(node);
-      if (tag === "#text") out += String(node["#text"]).replace(/\s+/g, " ");
-      else if (tag === "br") out += "\n";
+      if (tag === "#text") {
+        const text = String(node["#text"]).replace(/\s+/g, " ");
+        if (text !== "" && Object.keys(style).length > 0) {
+          raw.push({ start: out.length, end: out.length + text.length, ...style });
+        }
+        out += text;
+      } else if (tag === "br") out += "\n";
       else if (tag === "comment") continue;
       else if (tag === "chord") {
         const name = chordName(attrsOf(node));
         if (name !== "") out += `[${name}]`;
-        walk(childrenOf(node));
-      } else walk(childrenOf(node));
+        walk(childrenOf(node), style);
+      } else if (tag === "tag") {
+        const known = FORMAT_TAGS[(attrsOf(node).name ?? "").toLowerCase()];
+        walk(childrenOf(node), known === undefined ? style : { ...style, ...known });
+      } else walk(childrenOf(node), style);
     }
   };
-  walk(nodes);
-  return out
+  walk(nodes, {});
+  const text = out
     .split("\n")
     .map((line) => line.trim())
     .join("\n")
     .replace(/^\n+|\n+$/g, "");
+  // Gli spazi e gli "a capo" tolti ai bordi non spostano la formattazione dalle parole.
+  const spans = raw.length === 0 ? [] : remapSpans(out, raw, keepOf(out, text));
+  return { text, spans };
 }
 
 const AUTHOR_TYPES: Readonly<Record<string, Author["role"]>> = {
@@ -176,19 +225,21 @@ export function parseOpenLyrics(xml: string): Song {
     const attrs = attrsOf(verse);
     if (attrs.lang !== undefined && attrs.lang !== lang) continue;
     const name = (attrs.name ?? "").toLowerCase();
-    const slides = find(childrenOf(verse), "lines")
-      .map((lines) => linesText(childrenOf(lines)))
-      .filter((s) => s !== "");
+    const parts = find(childrenOf(verse), "lines")
+      .map((lines) => linesRich(childrenOf(lines)))
+      .filter((part) => part.text !== "");
+    const slides = parts.map((part) => part.text);
+    const slideSpans = parts.map((part) => part.spans);
     if (slides.length === 0) continue;
     const match = /^([a-z])(\d*)([a-z]*)$/.exec(name);
     const parsed = parseSectionId(`${match?.[1] ?? "o"}${match?.[2] ?? ""}`);
     const base = parsed === undefined ? undefined : sectionId(parsed);
     if (base !== undefined && (match?.[3] ?? "") !== "" && builder.has(base)) {
-      builder.append(base, slides);
+      builder.append(base, slides, slideSpans);
       baseOf.set(name, base);
       continue;
     }
-    const id = builder.add(parsed?.kind ?? "other", parsed?.number, slides);
+    const id = builder.add(parsed?.kind ?? "other", parsed?.number, slides, slideSpans);
     baseOf.set(name, id);
   }
   const { sections, order: sequence } = builder.finish();
@@ -219,7 +270,9 @@ export function parseOpenLyrics(xml: string): Song {
   const copyright = one("copyright");
   const publisher = one("publisher");
   const key = one("key");
-  return {
+  // Le parole formattate scritte da Cuelith (blocco che gli altri programmi ignorano).
+  const richtext = find(top, "richtext")[0];
+  const song: Song = {
     ...emptySong(),
     title,
     altTitles,
@@ -236,6 +289,7 @@ export function parseOpenLyrics(xml: string): Song {
     sections: sections.length === 0 ? emptySong().sections : sections,
     order,
   };
+  return richtext === undefined ? song : applyFormat(song, textOf(richtext));
 }
 
 // ---------- Esportazione ----------
@@ -271,7 +325,10 @@ const AUTHOR_EXPORT: Readonly<Record<Author["role"], string>> = {
   arrangement: ' type="arrangement"',
 };
 
-export function toOpenLyrics(song: Song, options: { version?: string; now?: Date } = {}): string {
+export function toOpenLyrics(
+  song: Song,
+  options: { version?: string; now?: Date; formatting?: boolean } = {},
+): string {
   const app = `Cuelith songs ${options.version ?? ""}`.trim();
   const now = (options.now ?? new Date()).toISOString().replace(/\.\d{3}Z$/, "");
   const p: string[] = [];
@@ -338,6 +395,15 @@ export function toOpenLyrics(song: Song, options: { version?: string; now?: Date
     "  <lyrics>",
     ...song.sections.map(verseXml),
     "  </lyrics>",
+    // Le parole formattate di Cuelith (solo se richieste): un elemento con un nome tutto nostro,
+    // che gli altri programmi non conoscono e ignorano.
+    ...(options.formatting === true && encodeFormat(song) !== undefined
+      ? [
+          `  <cuelith:richtext xmlns:cuelith="${OPENLYRICS_FORMAT_NAMESPACE}">${escapeXml(
+            encodeFormat(song) ?? "",
+          )}</cuelith:richtext>`,
+        ]
+      : []),
     "</song>",
     "",
   ].join("\n");
