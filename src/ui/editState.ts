@@ -1,10 +1,9 @@
-import type { Author } from "@cuelith/protocol";
+import type { Author, Span } from "@cuelith/protocol";
+import { joinSectionRich, splitSectionRich } from "../model/rich.js";
 import {
   nextNumber,
   parseOrder,
   formatOrder,
-  sectionText,
-  splitSlides,
   type Section,
   type SectionKind,
   type Song,
@@ -19,6 +18,8 @@ export interface EditSection {
   readonly number: number;
   /** Slide separate dalla riga [---]. */
   readonly text: string;
+  /** Parole formattate, nelle posizioni di `text` (protocollo 1.21). */
+  readonly spans: readonly Span[];
 }
 
 export interface EditAuthor {
@@ -75,12 +76,16 @@ export function fromSong(song: Song): EditState {
     songbooks: song.songbooks.map((b) => ({ key: newKey(), name: b.name, entry: b.entry ?? "" })),
     tags: song.tags.join(", "),
     comment: song.comment ?? "",
-    sections: song.sections.map((s) => ({
-      key: newKey(),
-      kind: s.kind,
-      number: s.number,
-      text: sectionText(s),
-    })),
+    sections: song.sections.map((s) => {
+      const rich = joinSectionRich(s.slides, s.spans ?? []);
+      return {
+        key: newKey(),
+        kind: s.kind,
+        number: s.number,
+        text: rich.text,
+        spans: rich.spans ?? [],
+      };
+    }),
     order: formatOrder(song.order),
   };
 }
@@ -93,11 +98,15 @@ function pick<K extends string>(key: K, value: string): Partial<Record<K, string
 export function toSong(state: EditState): Song {
   const year = state.year.trim() === "" ? undefined : Number(state.year.trim());
   const tempo = Number.parseFloat(state.tempo.replace(",", "."));
-  const sections: Section[] = state.sections.map((s) => ({
-    kind: s.kind,
-    number: s.number,
-    slides: splitSlides(s.text),
-  }));
+  const sections: Section[] = state.sections.map((s) => {
+    const parts = splitSectionRich(s.text, s.spans);
+    return {
+      kind: s.kind,
+      number: s.number,
+      slides: parts.map((part) => part.text),
+      spans: parts.map((part) => part.spans ?? []),
+    };
+  });
   return {
     title: state.title,
     altTitles: state.altTitles.split(";"),
@@ -123,7 +132,10 @@ export function toSong(state: EditState): Song {
 /** Nuova sezione del tipo scelto, col primo numero libero. */
 export function addSection(state: EditState, kind: SectionKind): EditState {
   const number = nextNumber(state.sections, kind);
-  return { ...state, sections: [...state.sections, { key: newKey(), kind, number, text: "" }] };
+  return {
+    ...state,
+    sections: [...state.sections, { key: newKey(), kind, number, text: "", spans: [] }],
+  };
 }
 
 /** Cambia il tipo di una sezione: prende il primo numero libero del nuovo tipo. */

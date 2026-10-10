@@ -1,5 +1,5 @@
-import { AUTHOR_ROLES, newId, type Item } from "@cuelith/protocol";
-import { useEffect, useState, type ReactNode } from "react";
+import { AUTHOR_ROLES, newId, segmentsOf, type Item, type Segment } from "@cuelith/protocol";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { toChordPro, toOpenLyrics } from "../formats/index.js";
 import {
   checkSong,
@@ -14,10 +14,10 @@ import {
   songToItem,
   SLIDE_BREAK,
   splitSlides,
-  stripChords,
   type ItemBase,
   type SongIssue,
 } from "../model/song.js";
+import { splitSectionRich, stripChordsRich } from "../model/rich.js";
 import { readContext } from "./context.js";
 import {
   addSection,
@@ -29,8 +29,19 @@ import {
   type EditState,
 } from "./editState.js";
 import { errorKey, usePanel, useT } from "./panel.js";
+import { RichTextarea } from "./RichTextarea.js";
 
 declare const __SONGS_VERSION__: string;
+
+/** Come appare un pezzo di testo formattato (la stessa idea della postazione: grande, grassetto, corsivo, colore). */
+function segmentLook(segment: Segment): CSSProperties {
+  return {
+    ...(segment.size === undefined ? {} : { fontSize: `${String(segment.size * 100)}%` }),
+    ...(segment.bold === true ? { fontWeight: 700 } : {}),
+    ...(segment.italic === true ? { fontStyle: "italic" } : {}),
+    ...(segment.color === undefined ? {} : { color: segment.color }),
+  };
+}
 
 type Loading =
   | { readonly state: "loading" }
@@ -183,12 +194,16 @@ export function EditorPanel() {
   const previewSlides = shownOrder.flatMap((id, position) => {
     const section = edit.sections.find((s) => sectionId(s) === id);
     if (section === undefined) return [];
-    return splitSlides(section.text).map((text, index) => ({
-      key: `${String(position)}-${String(index)}`,
-      id,
-      kind: section.kind,
-      text: stripChords(text),
-    }));
+    return splitSectionRich(section.text, section.spans).map((part, index) => {
+      const shown = stripChordsRich(part);
+      return {
+        key: `${String(position)}-${String(index)}`,
+        id,
+        kind: section.kind,
+        text: shown.text,
+        spans: shown.spans,
+      };
+    });
   });
   const jumpTo = (key: number) => {
     document.getElementById(`s-section-${String(key)}`)?.scrollIntoView({ block: "nearest" });
@@ -507,17 +522,17 @@ export function EditorPanel() {
                       ×
                     </button>
                   </div>
-                  <textarea
-                    className="cl-input s-text"
+                  <RichTextarea
+                    field={`section-${String(section.key)}`}
                     value={section.text}
+                    spans={section.spans}
                     rows={Math.min(14, Math.max(4, section.text.split("\n").length + 1))}
-                    aria-label={t("cuelith.songs.field.sectionText", { section: id.toUpperCase() })}
-                    spellCheck={false}
-                    onChange={(e) => {
+                    label={t("cuelith.songs.field.sectionText", { section: id.toUpperCase() })}
+                    onChange={(text, spans) => {
                       set(
                         "sections",
                         edit.sections.map((s) =>
-                          s.key === section.key ? { ...s, text: e.target.value } : s,
+                          s.key === section.key ? { ...s, text, spans } : s,
                         ),
                       );
                     }}
@@ -599,7 +614,13 @@ export function EditorPanel() {
                     data-kind={slide.kind}
                   >
                     <span className="s-badge s-badge--mini">{slide.id.toUpperCase()}</span>
-                    <span className="s-slide-text">{slide.text}</span>
+                    <span className="s-slide-text">
+                      {segmentsOf(slide.text, slide.spans).map((segment, index) => (
+                        <span key={index} style={segmentLook(segment)}>
+                          {segment.text}
+                        </span>
+                      ))}
+                    </span>
                   </li>
                 ))}
               </ol>

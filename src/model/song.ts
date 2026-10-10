@@ -1,11 +1,17 @@
 import {
   newId,
+  SpanSchema,
   type Attachment,
   type Author,
   type Credits,
   type Item,
   type Slide,
+  type Span,
 } from "@cuelith/protocol";
+import { stripChordsRich } from "./rich.js";
+import { SLIDE_BREAK, stripChords, trimLines } from "./text.js";
+
+export { SLIDE_BREAK, stripChords, trimLines };
 
 /** Tipo di elemento dei canti (id del modulo + id locale del tipo). */
 export const SONG_TYPE = "cuelith.songs.song";
@@ -55,9 +61,6 @@ const KIND_OF_LETTER = new Map(
   Object.entries(SECTION_LETTER).map(([kind, letter]) => [letter, kind as SectionKind]),
 );
 
-/** Riga che divide una sezione in piu' slide. */
-export const SLIDE_BREAK = "[---]";
-
 export interface Section {
   readonly kind: SectionKind;
   /** Numero della sezione nel suo tipo (strofa 1, strofa 2...). */
@@ -67,6 +70,11 @@ export interface Section {
    * stanno tra quadre dentro il testo, come in ChordPro: "[G]Santo, [D]santo".
    */
   readonly slides: readonly string[];
+  /**
+   * Parole formattate di ogni slide (protocollo 1.21), nelle posizioni del testo qui sopra
+   * (accordi compresi); una voce per slide, vuota se la slide non ha formattazione.
+   */
+  readonly spans?: readonly (readonly Span[])[];
 }
 
 export interface Songbook {
@@ -163,25 +171,6 @@ export function splitSlides(text: string): string[] {
     .map((slide) => trimLines(slide));
 }
 
-/** Toglie righe vuote in testa e in coda e gli spazi a fine riga. */
-export function trimLines(text: string): string {
-  return text
-    .split("\n")
-    .map((line) => line.trimEnd())
-    .join("\n")
-    .replace(/^\n+|\n+$/g, "");
-}
-
-const CHORD = /\[[^\]\n]*\]/g;
-
-/** Il testo senza accordi, come si proietta. */
-export function stripChords(text: string): string {
-  return text
-    .split("\n")
-    .map((line) => line.replace(CHORD, "").replace(/ {2,}/g, " ").trim())
-    .join("\n");
-}
-
 export function hasChords(text: string): boolean {
   return /\[[^\]\n]+\]/.test(text);
 }
@@ -238,7 +227,19 @@ export function checkSong(song: Song): SongIssue[] {
 /** Sezioni senza testo tolte e ordine ripulito: cosi' si salva. */
 export function normalizeSong(song: Song): Song {
   const sections = song.sections
-    .map((s) => ({ ...s, slides: s.slides.map(trimLines).filter((slide) => slide !== "") }))
+    .map((s) => {
+      // Le slide vuote spariscono e con loro le loro parole formattate.
+      const kept = s.slides.map((slide, index) => ({ slide: trimLines(slide), index }));
+      const filled = kept.filter((entry) => entry.slide !== "");
+      const own =
+        s.spans === undefined ? undefined : filled.map((entry) => s.spans?.[entry.index] ?? []);
+      const { spans: _old, ...rest } = s;
+      return {
+        ...rest,
+        slides: filled.map((entry) => entry.slide),
+        ...(own !== undefined && own.some((spans) => spans.length > 0) ? { spans: own } : {}),
+      };
+    })
     .filter((s) => s.slides.length > 0);
   const ids = new Set(sections.map(sectionId));
   const order = song.order.filter((id) => ids.has(id));
@@ -262,6 +263,11 @@ export function normalizeSong(song: Song): Song {
 // ---------- Elemento dello show / dell'archivio ----------
 
 interface SongMeta {
+  /**
+   * Parole formattate di ogni slide nelle posizioni dell'editor (con gli accordi), per gruppo e
+   * numero di slide ("v1:0"): serve a ritrovarle quando si riapre il canto.
+   */
+  spans?: Record<string, Span[]>;
   key?: string;
   tempo?: number;
   songbooks?: Songbook[];
@@ -285,20 +291,34 @@ export function songToItem(input: Song, base?: ItemBase): Item {
     if (slide.group === undefined) continue;
     oldIds.set(slide.group, [...(oldIds.get(slide.group) ?? []), slide.id]);
   }
+  const editorSpans: Record<string, Span[]> = {};
   const slides: Slide[] = song.sections.flatMap((section) => {
     const group = sectionId(section);
     const ids = oldIds.get(group) ?? [];
-    return section.slides.map((text, i) => ({
-      id: ids[i] ?? newId(),
-      group,
-      fields: {
-        text: { kind: "text" as const, value: stripChords(text) },
-        ...(hasChords(text) ? { chords: { kind: "chords" as const, value: text } } : {}),
-      },
-    }));
+    return section.slides.map((text, i) => {
+      const own = section.spans?.[i] ?? [];
+      if (own.length > 0) editorSpans[`${group}:${String(i)}`] = [...own];
+      // Sulla slide proiettata le parole formattate stanno dove sono finite senza gli accordi.
+      const shown = stripChordsRich(own.length === 0 ? { text } : { text, spans: own });
+      return {
+        id: ids[i] ?? newId(),
+        group,
+        fields: {
+          text: {
+            kind: "text" as const,
+            value: shown.text,
+            ...(shown.spans === undefined || shown.spans.length === 0
+              ? {}
+              : { spans: [...shown.spans] }),
+          },
+          ...(hasChords(text) ? { chords: { kind: "chords" as const, value: text } } : {}),
+        },
+      };
+    });
   });
 
   const meta: SongMeta = {
+    ...(Object.keys(editorSpans).length === 0 ? {} : { spans: editorSpans }),
     ...(song.key === undefined ? {} : { key: song.key }),
     ...(song.tempo === undefined ? {} : { tempo: song.tempo }),
     ...(song.songbooks.length === 0 ? {} : { songbooks: [...song.songbooks] }),
@@ -332,24 +352,32 @@ export function songToItem(input: Song, base?: ItemBase): Item {
 
 /** Elemento -> canto (anche un testo semplice, per trasformarlo in canto). */
 export function itemToSong(item: Item): Song {
+  const meta = readMeta(item.meta[META_KEY]);
   const sections: Section[] = [];
-  const byGroup = new Map<string, string[]>();
+  const byGroup = new Map<string, { slides: string[]; spans: Span[][] }>();
   for (const slide of item.slides) {
     const text = slide.fields.chords?.value ?? slide.fields.text?.value ?? "";
     const parsed = slide.group === undefined ? undefined : parseSectionId(slide.group);
     // Una slide senza sezione riconoscibile (es. da un testo semplice) diventa una strofa.
     const group = parsed === undefined ? `v${nextNumber(sections, "verse")}` : sectionId(parsed);
-    const existing = byGroup.get(group);
-    if (existing !== undefined) {
-      existing.push(text);
-      continue;
+    let entry = byGroup.get(group);
+    if (entry === undefined) {
+      entry = { slides: [], spans: [] };
+      byGroup.set(group, entry);
+      const target = parseSectionId(group) ?? { kind: "verse" as const, number: 1 };
+      sections.push({ ...target, slides: entry.slides });
     }
-    const list = [text];
-    byGroup.set(group, list);
-    const target = parseSectionId(group) ?? { kind: "verse" as const, number: 1 };
-    sections.push({ ...target, slides: list });
+    // Le parole formattate: con gli accordi stanno nei dati del canto (posizioni dell'editor),
+    // senza accordi sono quelle del testo proiettato.
+    const field = slide.fields.text;
+    const projected = field?.kind === "text" ? (field.spans ?? []) : [];
+    const own =
+      slide.fields.chords === undefined
+        ? projected
+        : (meta.spans?.[`${group}:${String(entry.slides.length)}`] ?? []);
+    entry.slides.push(text);
+    entry.spans.push([...own]);
   }
-  const meta = readMeta(item.meta[META_KEY]);
   const credits = item.credits;
   const ids = new Set(sections.map(sectionId));
   return {
@@ -361,10 +389,16 @@ export function itemToSong(item: Item): Song {
     ...(credits?.year === undefined ? {} : { year: credits.year }),
     ...(credits?.ccli === undefined ? {} : { ccli: credits.ccli }),
     creditsShow: credits?.show ?? "last",
-    ...meta,
+    ...(({ spans: _spans, ...rest }) => rest)(meta),
     songbooks: meta.songbooks ?? [],
     tags: item.tags ?? [],
-    sections: sections.length === 0 ? emptySong().sections : sections,
+    sections:
+      sections.length === 0
+        ? emptySong().sections
+        : sections.map((section) => {
+            const spans = byGroup.get(sectionId(section))?.spans;
+            return spans?.some((own) => own.length > 0) === true ? { ...section, spans } : section;
+          }),
     order: (item.arrangement ?? []).filter((id) => ids.has(id)),
   };
 }
@@ -376,6 +410,14 @@ function readMeta(value: unknown): SongMeta {
   if (typeof raw.key === "string") meta.key = raw.key;
   if (typeof raw.tempo === "number") meta.tempo = raw.tempo;
   if (typeof raw.comment === "string") meta.comment = raw.comment;
+  if (typeof raw.spans === "object" && raw.spans !== null) {
+    const spans: Record<string, Span[]> = {};
+    for (const [key, list] of Object.entries(raw.spans)) {
+      const parsed = SpanSchema.array().safeParse(list);
+      if (parsed.success) spans[key] = parsed.data;
+    }
+    meta.spans = spans;
+  }
   if (Array.isArray(raw.songbooks)) {
     meta.songbooks = raw.songbooks.flatMap((b: unknown) => {
       if (typeof b !== "object" || b === null) return [];
