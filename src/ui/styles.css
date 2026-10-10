@@ -594,3 +594,57 @@ textarea.cl-input {
 .s-details > :not(summary) {
   margin-inline: 12px;
 }
+
+/* Schede dell'editor (come nei programmi di testi per canti): titolo sempre in vista, il resto a schede. */
+.s-titlebar {
+  padding: 10px 14px 0;
+}
+
+.s-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 14px 0;
+  border-bottom: 1px solid var(--cl-line);
+}
+
+.s-tab {
+  position: relative;
+  margin-bottom: -1px;
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: none;
+  color: var(--cl-muted);
+  cursor: pointer;
+}
+
+.s-tab:hover {
+  color: var(--cl-fg);
+}
+
+.s-tab[aria-selected="true"] {
+  border-color: var(--cl-line);
+  background: var(--cl-bg-2);
+  color: var(--cl-fg);
+}
+
+.s-tab-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--cl-live);
+}
+
+.s-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  max-width: 760px;
+  padding: 14px;
+}

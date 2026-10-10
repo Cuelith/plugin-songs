@@ -33,6 +33,21 @@ import { RichTextarea } from "./RichTextarea.js";
 
 declare const __SONGS_VERSION__: string;
 
+type EditorTab = "text" | "credits" | "more";
+
+/** In quale scheda si sistema un problema del canto (il titolo sta sopra le schede). */
+function tabOfIssue(key: string): EditorTab | undefined {
+  if (
+    key.endsWith("authorRequired") ||
+    key.endsWith("ccliInvalid") ||
+    key.endsWith("yearInvalid")
+  ) {
+    return "credits";
+  }
+  if (key.endsWith("titleRequired")) return undefined;
+  return "text";
+}
+
 /** Come appare un pezzo di testo formattato (la stessa idea della postazione: grande, grassetto, corsivo, colore). */
 function segmentLook(segment: Segment): CSSProperties {
   return {
@@ -61,6 +76,7 @@ export function EditorPanel() {
   const [issues, setIssues] = useState<readonly SongIssue[]>([]);
   const [saving, setSaving] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
+  const [tab, setTab] = useState<EditorTab>("text");
 
   useEffect(() => {
     let cancelled = false;
@@ -131,6 +147,10 @@ export function EditorPanel() {
     const song = toSong(edit);
     const found = checkSong(song);
     setIssues(found);
+    // Se manca qualcosa in una scheda diversa da questa, ci si porta li' (i problemi stanno in cima).
+    const target = found.map((issue) => tabOfIssue(issue.key)).find((id) => id !== undefined);
+    if (target !== undefined && !found.some((issue) => tabOfIssue(issue.key) === tab))
+      setTab(target);
     return found.length === 0 ? normalizeSong(song) : undefined;
   };
 
@@ -187,6 +207,7 @@ export function EditorPanel() {
     else void panel.close();
   };
 
+  const tabsWithIssues = new Set(issues.map((issue) => tabOfIssue(issue.key)));
   const sectionIds = edit.sections.map(sectionId);
   const order = parseOrder(edit.order);
   const shownOrder = projectionOrder({ sections: edit.sections, order });
@@ -307,18 +328,275 @@ export function EditorPanel() {
         </ul>
       )}
 
-      <div className="s-columns">
-        <div className="s-main">
-          <Field label={t("cuelith.songs.field.title")} required>
-            <input
-              className="cl-input s-title"
-              value={edit.title}
-              autoFocus={isNew}
-              onChange={(e) => {
-                set("title", e.target.value);
-              }}
-            />
-          </Field>
+      <div className="s-titlebar">
+        <Field label={t("cuelith.songs.field.title")} required>
+          <input
+            className="cl-input s-title"
+            value={edit.title}
+            autoFocus={isNew}
+            onChange={(e) => {
+              set("title", e.target.value);
+            }}
+          />
+        </Field>
+      </div>
+      <div role="tablist" aria-label={t("cuelith.songs.editor.tabs")} className="s-tabs">
+        {(["text", "credits", "more"] as const).map((id) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            id={`s-tab-${id}`}
+            aria-controls="s-tabpanel"
+            aria-selected={tab === id}
+            data-issue={tabsWithIssues.has(id)}
+            className="s-tab"
+            onClick={() => {
+              setTab(id);
+            }}
+          >
+            {t(`cuelith.songs.tab.${id}`)}
+            {tabsWithIssues.has(id) && <span aria-hidden="true" className="s-tab-dot" />}
+          </button>
+        ))}
+      </div>
+      {tab === "text" && (
+        <div className="s-columns" role="tabpanel" id="s-tabpanel" aria-labelledby="s-tab-text">
+          <div className="s-main">
+            <fieldset className="s-group">
+              <legend
+                className="cl-label"
+                title={t("cuelith.songs.field.sectionsHint", { mark: SLIDE_BREAK })}
+              >
+                {t("cuelith.songs.field.sections")} <span className="s-required">*</span>
+              </legend>
+              <nav className="s-jump" aria-label={t("cuelith.songs.editor.jump")}>
+                {edit.sections.map((section) => (
+                  <button
+                    key={section.key}
+                    type="button"
+                    className="s-jump-chip"
+                    data-kind={section.kind}
+                    onClick={() => {
+                      jumpTo(section.key);
+                    }}
+                  >
+                    {sectionId(section).toUpperCase()}
+                  </button>
+                ))}
+              </nav>
+              {edit.sections.map((section, index) => {
+                const id = sectionId(section);
+                const duplicate = sectionIds.indexOf(id) !== index;
+                return (
+                  <div
+                    key={section.key}
+                    id={`s-section-${String(section.key)}`}
+                    className="s-section"
+                    data-section={id}
+                    data-kind={section.kind}
+                  >
+                    <div className="s-row">
+                      <span className={`s-badge${duplicate ? " s-badge--error" : ""}`}>
+                        {id.toUpperCase()}
+                      </span>
+                      <select
+                        className="cl-input"
+                        value={section.kind}
+                        aria-label={t("cuelith.songs.field.sectionKind", {
+                          section: id.toUpperCase(),
+                        })}
+                        onChange={(e) => {
+                          const kind = SECTION_KINDS.find((k) => k === e.target.value) ?? "verse";
+                          update(changeKind(edit, section.key, kind));
+                        }}
+                      >
+                        {SECTION_KINDS.map((kind) => (
+                          <option key={kind} value={kind}>
+                            {SECTION_LABEL[kind]}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        className="cl-input s-number-input"
+                        type="number"
+                        min={1}
+                        max={99}
+                        value={section.number}
+                        aria-label={t("cuelith.songs.field.sectionNumber", {
+                          section: id.toUpperCase(),
+                        })}
+                        onChange={(e) => {
+                          const number = Math.min(
+                            99,
+                            Math.max(1, Math.trunc(Number(e.target.value)) || 1),
+                          );
+                          set(
+                            "sections",
+                            edit.sections.map((s) =>
+                              s.key === section.key ? { ...s, number } : s,
+                            ),
+                          );
+                        }}
+                      />
+                      <span className="s-grow" />
+                      <span className="s-slides">
+                        {t("cuelith.songs.editor.slides", {
+                          count: splitSlides(section.text).filter((x) => x !== "").length,
+                        })}
+                      </span>
+                      <button
+                        type="button"
+                        className="cl-btn s-small"
+                        aria-label={t("cuelith.songs.action.moveUp", { section: id.toUpperCase() })}
+                        disabled={index === 0}
+                        onClick={() => {
+                          update(moveSection(edit, section.key, -1));
+                        }}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        className="cl-btn s-small"
+                        aria-label={t("cuelith.songs.action.moveDown", {
+                          section: id.toUpperCase(),
+                        })}
+                        disabled={index === edit.sections.length - 1}
+                        onClick={() => {
+                          update(moveSection(edit, section.key, 1));
+                        }}
+                      >
+                        ↓
+                      </button>
+                      <button
+                        type="button"
+                        className="cl-btn s-small"
+                        aria-label={t("cuelith.songs.action.removeSection", {
+                          section: id.toUpperCase(),
+                        })}
+                        disabled={edit.sections.length === 1}
+                        onClick={() => {
+                          set(
+                            "sections",
+                            edit.sections.filter((s) => s.key !== section.key),
+                          );
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <RichTextarea
+                      field={`section-${String(section.key)}`}
+                      value={section.text}
+                      spans={section.spans}
+                      rows={Math.min(14, Math.max(4, section.text.split("\n").length + 1))}
+                      label={t("cuelith.songs.field.sectionText", { section: id.toUpperCase() })}
+                      onChange={(text, spans) => {
+                        set(
+                          "sections",
+                          edit.sections.map((s) =>
+                            s.key === section.key ? { ...s, text, spans } : s,
+                          ),
+                        );
+                      }}
+                    />
+                  </div>
+                );
+              })}
+              <div className="s-row s-wrap">
+                {SECTION_KINDS.map((kind) => (
+                  <button
+                    key={kind}
+                    type="button"
+                    className="cl-btn s-small"
+                    onClick={() => {
+                      update(addSection(edit, kind));
+                    }}
+                  >
+                    + {SECTION_LABEL[kind]}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+          <aside className="s-side">
+            <fieldset className="s-group">
+              <legend className="cl-label">{t("cuelith.songs.field.order")}</legend>
+              <input
+                className="cl-input s-mono"
+                value={edit.order}
+                aria-label={t("cuelith.songs.field.order")}
+                placeholder={t("cuelith.songs.field.orderPlaceholder")}
+                onChange={(e) => {
+                  set("order", e.target.value.toUpperCase());
+                }}
+              />
+              <div className="s-row s-wrap" aria-label={t("cuelith.songs.field.orderAdd")}>
+                {[...new Set(sectionIds)].map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className="cl-btn s-small s-mono"
+                    aria-label={t("cuelith.songs.action.orderAppend", {
+                      section: id.toUpperCase(),
+                    })}
+                    onClick={() => {
+                      set("order", `${edit.order.trim()} ${id.toUpperCase()}`.trim());
+                    }}
+                  >
+                    {id.toUpperCase()}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className="cl-btn s-small"
+                  disabled={edit.order.trim() === ""}
+                  onClick={() => {
+                    set("order", "");
+                  }}
+                >
+                  {t("cuelith.songs.action.orderAuto")}
+                </button>
+              </div>
+              <p className="s-hint" data-testid="song-order">
+                {t("cuelith.songs.field.orderResult")}{" "}
+                <span className="s-mono">
+                  {shownOrder.map((id) => id.toUpperCase()).join(" → ")}
+                </span>
+              </p>
+            </fieldset>
+            <section className="s-group s-preview" aria-label={t("cuelith.songs.editor.preview")}>
+              <h3 className="cl-label">{t("cuelith.songs.editor.preview")}</h3>
+              {previewSlides.every((slide) => slide.text === "") ? (
+                <p className="s-hint">{t("cuelith.songs.editor.previewEmpty")}</p>
+              ) : (
+                <ol className="s-slide-list">
+                  {previewSlides.map((slide) => (
+                    <li
+                      key={slide.key}
+                      className="s-slide"
+                      data-section={slide.id}
+                      data-kind={slide.kind}
+                    >
+                      <span className="s-badge s-badge--mini">{slide.id.toUpperCase()}</span>
+                      <span className="s-slide-text">
+                        {segmentsOf(slide.text, slide.spans).map((segment, index) => (
+                          <span key={index} style={segmentLook(segment)}>
+                            {segment.text}
+                          </span>
+                        ))}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+          </aside>
+        </div>
+      )}
+      {tab === "credits" && (
+        <div className="s-pane" role="tabpanel" id="s-tabpanel" aria-labelledby="s-tab-credits">
           <fieldset className="s-group">
             <legend className="cl-label">
               {t("cuelith.songs.field.authors")} <span className="s-required">*</span>
@@ -402,233 +680,8 @@ export function EditorPanel() {
               </button>
             </div>
           </fieldset>
-
           <fieldset className="s-group">
-            <legend
-              className="cl-label"
-              title={t("cuelith.songs.field.sectionsHint", { mark: SLIDE_BREAK })}
-            >
-              {t("cuelith.songs.field.sections")} <span className="s-required">*</span>
-            </legend>
-            <nav className="s-jump" aria-label={t("cuelith.songs.editor.jump")}>
-              {edit.sections.map((section) => (
-                <button
-                  key={section.key}
-                  type="button"
-                  className="s-jump-chip"
-                  data-kind={section.kind}
-                  onClick={() => {
-                    jumpTo(section.key);
-                  }}
-                >
-                  {sectionId(section).toUpperCase()}
-                </button>
-              ))}
-            </nav>
-            {edit.sections.map((section, index) => {
-              const id = sectionId(section);
-              const duplicate = sectionIds.indexOf(id) !== index;
-              return (
-                <div
-                  key={section.key}
-                  id={`s-section-${String(section.key)}`}
-                  className="s-section"
-                  data-section={id}
-                  data-kind={section.kind}
-                >
-                  <div className="s-row">
-                    <span className={`s-badge${duplicate ? " s-badge--error" : ""}`}>
-                      {id.toUpperCase()}
-                    </span>
-                    <select
-                      className="cl-input"
-                      value={section.kind}
-                      aria-label={t("cuelith.songs.field.sectionKind", {
-                        section: id.toUpperCase(),
-                      })}
-                      onChange={(e) => {
-                        const kind = SECTION_KINDS.find((k) => k === e.target.value) ?? "verse";
-                        update(changeKind(edit, section.key, kind));
-                      }}
-                    >
-                      {SECTION_KINDS.map((kind) => (
-                        <option key={kind} value={kind}>
-                          {SECTION_LABEL[kind]}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      className="cl-input s-number-input"
-                      type="number"
-                      min={1}
-                      max={99}
-                      value={section.number}
-                      aria-label={t("cuelith.songs.field.sectionNumber", {
-                        section: id.toUpperCase(),
-                      })}
-                      onChange={(e) => {
-                        const number = Math.min(
-                          99,
-                          Math.max(1, Math.trunc(Number(e.target.value)) || 1),
-                        );
-                        set(
-                          "sections",
-                          edit.sections.map((s) => (s.key === section.key ? { ...s, number } : s)),
-                        );
-                      }}
-                    />
-                    <span className="s-grow" />
-                    <span className="s-slides">
-                      {t("cuelith.songs.editor.slides", {
-                        count: splitSlides(section.text).filter((x) => x !== "").length,
-                      })}
-                    </span>
-                    <button
-                      type="button"
-                      className="cl-btn s-small"
-                      aria-label={t("cuelith.songs.action.moveUp", { section: id.toUpperCase() })}
-                      disabled={index === 0}
-                      onClick={() => {
-                        update(moveSection(edit, section.key, -1));
-                      }}
-                    >
-                      ↑
-                    </button>
-                    <button
-                      type="button"
-                      className="cl-btn s-small"
-                      aria-label={t("cuelith.songs.action.moveDown", { section: id.toUpperCase() })}
-                      disabled={index === edit.sections.length - 1}
-                      onClick={() => {
-                        update(moveSection(edit, section.key, 1));
-                      }}
-                    >
-                      ↓
-                    </button>
-                    <button
-                      type="button"
-                      className="cl-btn s-small"
-                      aria-label={t("cuelith.songs.action.removeSection", {
-                        section: id.toUpperCase(),
-                      })}
-                      disabled={edit.sections.length === 1}
-                      onClick={() => {
-                        set(
-                          "sections",
-                          edit.sections.filter((s) => s.key !== section.key),
-                        );
-                      }}
-                    >
-                      ×
-                    </button>
-                  </div>
-                  <RichTextarea
-                    field={`section-${String(section.key)}`}
-                    value={section.text}
-                    spans={section.spans}
-                    rows={Math.min(14, Math.max(4, section.text.split("\n").length + 1))}
-                    label={t("cuelith.songs.field.sectionText", { section: id.toUpperCase() })}
-                    onChange={(text, spans) => {
-                      set(
-                        "sections",
-                        edit.sections.map((s) =>
-                          s.key === section.key ? { ...s, text, spans } : s,
-                        ),
-                      );
-                    }}
-                  />
-                </div>
-              );
-            })}
-            <div className="s-row s-wrap">
-              {SECTION_KINDS.map((kind) => (
-                <button
-                  key={kind}
-                  type="button"
-                  className="cl-btn s-small"
-                  onClick={() => {
-                    update(addSection(edit, kind));
-                  }}
-                >
-                  + {SECTION_LABEL[kind]}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-        </div>
-
-        <aside className="s-side">
-          <fieldset className="s-group">
-            <legend className="cl-label">{t("cuelith.songs.field.order")}</legend>
-            <input
-              className="cl-input s-mono"
-              value={edit.order}
-              aria-label={t("cuelith.songs.field.order")}
-              placeholder={t("cuelith.songs.field.orderPlaceholder")}
-              onChange={(e) => {
-                set("order", e.target.value.toUpperCase());
-              }}
-            />
-            <div className="s-row s-wrap" aria-label={t("cuelith.songs.field.orderAdd")}>
-              {[...new Set(sectionIds)].map((id) => (
-                <button
-                  key={id}
-                  type="button"
-                  className="cl-btn s-small s-mono"
-                  aria-label={t("cuelith.songs.action.orderAppend", { section: id.toUpperCase() })}
-                  onClick={() => {
-                    set("order", `${edit.order.trim()} ${id.toUpperCase()}`.trim());
-                  }}
-                >
-                  {id.toUpperCase()}
-                </button>
-              ))}
-              <button
-                type="button"
-                className="cl-btn s-small"
-                disabled={edit.order.trim() === ""}
-                onClick={() => {
-                  set("order", "");
-                }}
-              >
-                {t("cuelith.songs.action.orderAuto")}
-              </button>
-            </div>
-            <p className="s-hint" data-testid="song-order">
-              {t("cuelith.songs.field.orderResult")}{" "}
-              <span className="s-mono">{shownOrder.map((id) => id.toUpperCase()).join(" → ")}</span>
-            </p>
-          </fieldset>
-
-          <section className="s-group s-preview" aria-label={t("cuelith.songs.editor.preview")}>
-            <h3 className="cl-label">{t("cuelith.songs.editor.preview")}</h3>
-            {previewSlides.every((slide) => slide.text === "") ? (
-              <p className="s-hint">{t("cuelith.songs.editor.previewEmpty")}</p>
-            ) : (
-              <ol className="s-slide-list">
-                {previewSlides.map((slide) => (
-                  <li
-                    key={slide.key}
-                    className="s-slide"
-                    data-section={slide.id}
-                    data-kind={slide.kind}
-                  >
-                    <span className="s-badge s-badge--mini">{slide.id.toUpperCase()}</span>
-                    <span className="s-slide-text">
-                      {segmentsOf(slide.text, slide.spans).map((segment, index) => (
-                        <span key={index} style={segmentLook(segment)}>
-                          {segment.text}
-                        </span>
-                      ))}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </section>
-
-          <details className="s-group s-details">
-            <summary className="cl-label">{t("cuelith.songs.field.credits")}</summary>
+            <legend className="cl-label">{t("cuelith.songs.field.credits")}</legend>
             <Field label={t("cuelith.songs.field.copyright")}>
               <input
                 className="cl-input"
@@ -683,10 +736,13 @@ export function EditorPanel() {
                 <option value="none">{t("cuelith.songs.creditsShow.none")}</option>
               </select>
             </Field>
-          </details>
-
-          <details className="s-group s-details">
-            <summary className="cl-label">{t("cuelith.songs.field.details")}</summary>
+          </fieldset>
+        </div>
+      )}
+      {tab === "more" && (
+        <div className="s-pane" role="tabpanel" id="s-tabpanel" aria-labelledby="s-tab-more">
+          <fieldset className="s-group">
+            <legend className="cl-label">{t("cuelith.songs.field.details")}</legend>
             <Field
               label={t("cuelith.songs.field.altTitles")}
               hint={t("cuelith.songs.field.altTitlesHint")}
@@ -795,9 +851,9 @@ export function EditorPanel() {
                 }}
               />
             </Field>
-          </details>
-        </aside>
-      </div>
+          </fieldset>
+        </div>
+      )}
     </div>
   );
 }

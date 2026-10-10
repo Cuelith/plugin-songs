@@ -119,5 +119,9 @@
   "cuelith.songs.action.editor": "Editor",
   "cuelith.songs.notice.addedMany": "{count} brani messi in scaletta.",
   "cuelith.songs.action.unknownAuthor": "Autore sconosciuto",
-  "cuelith.songs.author.unknown": "Autore sconosciuto"
+  "cuelith.songs.author.unknown": "Autore sconosciuto",
+  "cuelith.songs.editor.tabs": "Schede del brano",
+  "cuelith.songs.tab.text": "Testo",
+  "cuelith.songs.tab.credits": "Autori e crediti",
+  "cuelith.songs.tab.more": "Altri dati"
 }

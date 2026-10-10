@@ -119,5 +119,9 @@
   "cuelith.songs.action.editor": "Editor",
   "cuelith.songs.notice.addedMany": "{count} songs added to the playlist.",
   "cuelith.songs.action.unknownAuthor": "Unknown author",
-  "cuelith.songs.author.unknown": "Unknown author"
+  "cuelith.songs.author.unknown": "Unknown author",
+  "cuelith.songs.editor.tabs": "Song tabs",
+  "cuelith.songs.tab.text": "Text",
+  "cuelith.songs.tab.credits": "Authors and credits",
+  "cuelith.songs.tab.more": "Other data"
 }
